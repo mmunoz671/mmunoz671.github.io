@@ -1,0 +1,1187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=800, initial-scale=1">
+<title>Quantumtherobot Messenger Chat - preview</title>
+<style>
+/* Preview frame: fixed 800x450 canvas on a neutral background.
+   Change --preview-bg to "transparent" for a see-through background. */
+:root { --preview-bg: #3a3a3a; }
+html, body { margin: 0; padding: 0; }
+body { position: relative; width: 800px; height: 450px; overflow: hidden; }
+/* Separate backdrop element: widgets force html/body transparent for OBS. */
+#preview-backdrop { position: fixed; left: 0; top: 0; width: 800px; height: 450px; z-index: -1; background: var(--preview-bg); }
+</style>
+<style id="hide-editor-overlay">
+main.mc-preview::before, main.mc-preview::after { display: none !important; }
+</style>
+<style>
+/* Quantumtherobot Messenger Chat - original widget by Quantumtherobot */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  font-family: var(--mc-font-family, Tahoma, Verdana, sans-serif);
+}
+
+/* main fills the entire overlay canvas. The --mc-* custom properties below
+   are the widget's live color palette - either set here from the
+   Colors - Custom fields, or overwritten wholesale by applyColorPreset() in
+   the JS when a named preset is chosen. */
+main {
+  position: absolute;
+  inset: 0;
+  font-size: 15px;
+  font-weight: normal;
+
+  --mc-card-1: #D9EDFB;
+  --mc-card-2: #EAF5FC;
+  --mc-card-3: #FFFFFF;
+  --mc-name-color: #2E5F9E;
+  --mc-message-color: #1A1A1A;
+}
+
+/* List mode uses real flexbox with margin-based spacing between cards (see
+   the mc-dir-x / margin rules further down), not forced overlap. */
+main.mc-list {
+  display: flex;
+  padding: 20px;
+  align-items: flex-start;
+}
+
+main.mc-dir-bottom { flex-direction: column-reverse; }
+main.mc-dir-top { flex-direction: column; }
+main.mc-dir-left { flex-direction: row; }
+main.mc-dir-right { flex-direction: row-reverse; }
+
+/* Editor-only overlay shown when Preview Mode is on and you're in the
+   StreamElements editor (see the JS's onWidgetLoad) - a dashed border plus
+   the message below, so it's obvious the widget isn't broken, it's just
+   demoing itself. Both pieces are pure CSS, toggled by the mc-preview class. */
+main.mc-preview::before {
+  content: '';
+  position: absolute;
+  inset: 20px;
+  border: 8px dashed #fff;
+  box-shadow: 0 0 6px #000;
+  background: #0007;
+  z-index: -20;
+}
+
+main.mc-preview::after {
+  content: 'Preview Mode is on \a Turn it off in fields once you are done editing.';
+  white-space: pre-wrap;
+  position: absolute;
+  inset: 20px;
+  padding: 24px;
+  color: #fff;
+  font-family: Tahoma, Verdana, sans-serif;
+  font-size: 20px;
+  font-weight: bold;
+  text-shadow: 0 0 4px #000, 0 0 2px #000;
+  background: #000a;
+  z-index: -10;
+}
+
+/* ---------------------------------------------------------------------
+   Message card - each chat message is its own card with a real gap
+   between cards (list mode margins below), not a shared continuous frame.
+   --------------------------------------------------------------------- */
+.mc-card {
+  position: absolute;
+  visibility: hidden;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: fit-content;
+  max-width: calc(380px + 20px);
+  background: linear-gradient(to bottom, var(--mc-card-1) 0%, var(--mc-card-2) 55%, var(--mc-card-3) 100%);
+  border-radius: 8px;
+  padding: 9px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0; /* stops the flex container from squashing cards once the canvas fills up - see the standards doc's flex-shrink gotcha */
+}
+
+main.mc-fixed-width .mc-card {
+  width: calc(380px + 20px);
+}
+
+main.mc-list .mc-card { position: relative; }
+
+main.mc-dir-top .mc-card { margin-bottom: 8px; }
+main.mc-dir-bottom .mc-card { margin-top: 8px; }
+main.mc-dir-left .mc-card { margin-right: 8px; }
+main.mc-dir-right .mc-card { margin-left: 8px; }
+
+.mc-card.mc-visible { visibility: visible; }
+
+/* ---------------------------------------------------------------------
+   Photo frame - "thick glass" plastic frame colored by the chatter's
+   role/Twitch color/status (frameColorMode in the JS), with a soft top
+   shine to sell the glossy look. The frame IS the padding around the
+   inner photo. --mc-frame-1/2 are set inline per-card by the JS since the
+   color is computed per message, not a fixed field.
+   --------------------------------------------------------------------- */
+.mc-frame {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  border-radius: 9px;
+  padding: 5px;
+  flex-shrink: 0;
+  background: linear-gradient(160deg, var(--mc-frame-1), var(--mc-frame-2));
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.7),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.mc-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 38%;
+  border-radius: 9px 9px 0 0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6), transparent);
+  pointer-events: none;
+}
+
+/* The inner photo always carries its own border regardless of what's
+   inside it - without this the frame visually disappears whenever the
+   photo (or the neutral placeholder fill) is a similar color to the frame
+   gradient itself. */
+.mc-frame-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  background-color: #cbd2d9;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mc-frame-photo svg { width: 60%; height: 60%; opacity: 0.55; }
+
+/* ---------------------------------------------------------------------
+   Name row (badges, pronoun, name) and message text/emotes.
+   --------------------------------------------------------------------- */
+.mc-body { min-width: 0; flex: 1; padding-top: 1px; }
+
+.mc-name-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.mc-badge {
+  height: 15px;
+  vertical-align: middle;
+}
+
+.mc-name {
+  font-weight: bold;
+  color: var(--mc-name-color);
+}
+
+.mc-pronoun-suffix {
+  font-size: 0.85em;
+  color: var(--mc-name-color);
+  opacity: 0.75;
+  font-weight: normal;
+}
+
+.mc-pronoun {
+  border: 1px solid currentcolor;
+  border-radius: 3px;
+  font-size: 0.7em;
+  padding: 0 4px;
+  color: var(--mc-name-color);
+}
+
+.mc-pronoun.mc-pronoun-custom {
+  color: #FFFFFF;
+  background: #000000;
+  border-color: #FFFFFF;
+}
+
+.mc-text {
+  color: var(--mc-message-color);
+  line-height: 1.45;
+  direction: ltr;
+  max-height: 240px;
+  overflow: hidden;
+}
+
+.mc-text.mc-action { font-style: italic; }
+
+.mc-emote {
+  vertical-align: middle;
+  margin: -3px 0;
+}
+
+.mc-emotesize-1 .mc-emote { height: 1.5rem; }
+.mc-emotesize-2 .mc-emote { height: 2.6rem; }
+.mc-emotesize-4 .mc-emote { height: 4.4rem; }
+
+/* ---------------------------------------------------------------------
+   Entrance/exit animations - the JS adds one mc-anim-x class based on the
+   Entrance Animation field. mc-leaving always plays the same fade out,
+   regardless of which entrance animation was used.
+   --------------------------------------------------------------------- */
+.mc-anim-pop { animation: mc-pop-in 0.35s ease-out; }
+.mc-anim-fade { animation: mc-fade-in 0.35s ease-out; }
+.mc-anim-fade-up { animation: mc-fade-in 0.35s ease-out, mc-slide-up 0.35s ease-out; }
+.mc-anim-fade-down { animation: mc-fade-in 0.35s ease-out, mc-slide-down 0.35s ease-out; }
+.mc-anim-fade-left { animation: mc-fade-in 0.35s ease-out, mc-slide-left 0.35s ease-out; }
+.mc-anim-fade-right { animation: mc-fade-in 0.35s ease-out, mc-slide-right 0.35s ease-out; }
+
+/* Pure slide-in variants - no fade, just a longer travel distance than the
+   fade-up/down/left/right nudge above, so it reads as the card physically
+   sliding in from off to one side rather than a fade with a slight drift. */
+.mc-anim-slide-up { animation: mc-slide-in-up 0.35s ease-out; }
+.mc-anim-slide-down { animation: mc-slide-in-down 0.35s ease-out; }
+.mc-anim-slide-left { animation: mc-slide-in-left 0.35s ease-out; }
+.mc-anim-slide-right { animation: mc-slide-in-right 0.35s ease-out; }
+
+.mc-card.mc-leaving {
+  animation: mc-fade-out 0.4s ease-in forwards;
+}
+
+@keyframes mc-pop-in {
+  0% { transform: scale(0.6); opacity: 0; }
+  70% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes mc-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mc-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes mc-slide-up { from { transform: translateY(40px); } to { transform: translateY(0); } }
+@keyframes mc-slide-down { from { transform: translateY(-40px); } to { transform: translateY(0); } }
+@keyframes mc-slide-left { from { transform: translateX(40px); } to { transform: translateX(0); } }
+@keyframes mc-slide-right { from { transform: translateX(-40px); } to { transform: translateX(0); } }
+@keyframes mc-slide-in-up { from { transform: translateY(120px); } to { transform: translateY(0); } }
+@keyframes mc-slide-in-down { from { transform: translateY(-120px); } to { transform: translateY(0); } }
+@keyframes mc-slide-in-left { from { transform: translateX(120px); } to { transform: translateX(0); } }
+@keyframes mc-slide-in-right { from { transform: translateX(-120px); } to { transform: translateX(0); } }
+
+</style>
+<style>html,body{background:transparent!important}</style></head>
+<body>
+<aside id="preview-backdrop"></aside>
+<!-- Quantumtherobot Messenger Chat - original widget by Quantumtherobot -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Noto Sans&display=swap"
+  rel="stylesheet"
+/>
+
+<main></main>
+<script>
+// ======================= PREVIEW SETTINGS =======================
+// Color preset. Options: 'custom', 'classic', 'midnight', 'sage', 'lavender', 'sunset', 'slate'
+const PRESET = "classic";
+// Show the "Preview Mode is on" overlay the widget draws in the SE editor.
+const SHOW_EDITOR_OVERLAY = false;
+// ================================================================
+
+// Default values from fields.json (what StreamElements would send).
+const FIELD_DATA = {
+  "testMessageButton": "qntmos_msnchat",
+  "previewMode": true,
+  "colorPreset": "classic",
+  "frameColorMode": "role",
+  "cardColor1": "#D9EDFB",
+  "cardColor2": "#EAF5FC",
+  "cardColor3": "#FFFFFF",
+  "nameColor": "#2E5F9E",
+  "messageColor": "#1A1A1A",
+  "avatarImage1": "",
+  "avatarImage2": "",
+  "avatarImage3": "",
+  "avatarImage4": "",
+  "avatarImage5": "",
+  "positionMode": "list",
+  "topEdge": "true",
+  "bottomEdge": "true",
+  "leftEdge": "true",
+  "rightEdge": "true",
+  "edgeDeviation": 0,
+  "listDirection": "bottom",
+  "listAlignment": "flex-start",
+  "padding": 20,
+  "marginSize": 8,
+  "lifetime": 20,
+  "maxMessages": 12,
+  "animation": "slide-up",
+  "delay": 0,
+  "maxWidth": 380,
+  "maxHeight": 240,
+  "fixedWidth": "false",
+  "fontSource": "local",
+  "localFontName": "Tahoma",
+  "googleFont": "Noto Sans",
+  "fontSize": 15,
+  "fontWeight": "normal",
+  "textDirection": "ltr",
+  "largeEmotes": "true",
+  "pronounsMode": "suffix",
+  "pronounsLowercase": "true",
+  "customPronounColors": "false",
+  "pronounBackgroundColor": "#000000",
+  "pronounBorderColor": "#FFFFFF",
+  "pronounTextColor": "#FFFFFF",
+  "includeEveryone": "true",
+  "includeSubs": "true",
+  "includeVIPs": "true",
+  "includeMods": "true",
+  "allowUsers": "",
+  "ignoreUsers": "StreamElements, Streamlabs, Nightbot",
+  "ignorePrefixes": "!",
+  "soundEnabled": "false",
+  "messageSound": "",
+  "messageSoundVolume": 80,
+  "creditAuthor": "Quantumtherobot",
+  "pronounSetupNote": "pronouns.alejo.io"
+};
+FIELD_DATA["colorPreset"] = PRESET;
+FIELD_DATA["previewMode"] = true;
+
+if (SHOW_EDITOR_OVERLAY) document.getElementById('hide-editor-overlay')?.remove();
+
+// Minimal stand-in for the StreamElements API: reports editor mode so the
+// widget's built-in preview/test loop runs. Everything else is a no-op.
+window.SE_API = {
+  getOverlayStatus: () => Promise.resolve({ isEditorMode: true, muted: false }),
+  store: { get: () => Promise.resolve(null), set: () => {} },
+  counters: { get: () => Promise.resolve({ count: 0 }) },
+  resumeQueue: () => {},
+  sanitize: m => Promise.resolve({ result: { message: m.message } }),
+  cheerFilter: m => Promise.resolve(m),
+  setField: () => {},
+};
+</script>
+<script>
+// Quantumtherobot Messenger Chat - original widget by Quantumtherobot
+
+// Runtime state: current field values, channel info, how many message
+// cards are currently on screen, and caches for pronoun/7TV/avatar lookups.
+const MC = {
+  fields: {},
+  channel: {},
+  cardCount: 0,
+  pronounNames: {},
+  pronounCache: {},
+  sevenTV: {},
+  liveAvatars: {},
+  liveAvatarPending: {},
+}
+
+// Named color palettes for the message card background/text. Each maps
+// directly onto the CSS custom properties declared in the widget's main
+// rule (see widget.css) - applyColorPreset() below just copies these onto
+// the DOM when a named preset (not "Custom") is picked.
+const MC_PALETTES = {
+  classic:  { '--mc-card-1': '#D9EDFB', '--mc-card-2': '#EAF5FC', '--mc-card-3': '#FFFFFF', '--mc-name-color': '#2E5F9E', '--mc-message-color': '#1A1A1A' },
+  midnight: { '--mc-card-1': '#1C2636', '--mc-card-2': '#24314A', '--mc-card-3': '#2C3C5C', '--mc-name-color': '#9FC6FF', '--mc-message-color': '#EEF3FB' },
+  sage:     { '--mc-card-1': '#DCEFE0', '--mc-card-2': '#EAF6EC', '--mc-card-3': '#FFFFFF', '--mc-name-color': '#2E7D55', '--mc-message-color': '#1A1A1A' },
+  lavender: { '--mc-card-1': '#E6DEF8', '--mc-card-2': '#F1ECFB', '--mc-card-3': '#FFFFFF', '--mc-name-color': '#6A4FA3', '--mc-message-color': '#1A1A1A' },
+  sunset:   { '--mc-card-1': '#FBE3D9', '--mc-card-2': '#FDEEE7', '--mc-card-3': '#FFFFFF', '--mc-name-color': '#B5551F', '--mc-message-color': '#1A1A1A' },
+  slate:    { '--mc-card-1': '#DDE3EA', '--mc-card-2': '#EEF1F5', '--mc-card-3': '#FFFFFF', '--mc-name-color': '#3A4A5C', '--mc-message-color': '#1A1A1A' },
+}
+
+// Fixed photo-frame colors for frameColorMode = "role" - not fields, since
+// the whole point is that these signal the chatter's role at a glance the
+// same way across every stream using this widget. Priority when a chatter
+// has multiple badges: broadcaster > mod > vip > sub > regular.
+const MC_ROLE_COLORS = {
+  broadcaster: { light: 'rgba(230,80,70,0.82)', dark: 'rgba(175,35,30,0.78)' },
+  mod:         { light: 'rgba(111,212,90,0.75)', dark: 'rgba(58,156,58,0.7)' },
+  vip:         { light: 'rgba(240,128,189,0.75)', dark: 'rgba(224,85,156,0.7)' },
+  sub:         { light: 'rgba(177,131,232,0.75)', dark: 'rgba(148,87,212,0.7)' },
+  regular:     { light: 'rgba(196,196,196,0.75)', dark: 'rgba(168,168,168,0.7)' },
+}
+
+// Fixed frame colors for frameColorMode = "status" - a decorative nod to
+// classic MSN presence states. There's no real presence data behind this
+// (a chat widget can't know if someone is actually away), so each chatter
+// is assigned one deterministically (see hashString below) purely for
+// visual variety, and so the same chatter doesn't change color every message.
+const MC_STATUS_COLORS = {
+  online:  { light: 'rgba(90,200,110,0.75)', dark: 'rgba(40,140,60,0.7)' },
+  away:    { light: 'rgba(240,190,60,0.8)', dark: 'rgba(200,140,10,0.75)' },
+  busy:    { light: 'rgba(220,70,70,0.8)', dark: 'rgba(165,25,25,0.75)' },
+  offline: { light: 'rgba(150,150,150,0.7)', dark: 'rgba(110,110,110,0.65)' },
+}
+const MC_STATUS_KEYS = Object.keys(MC_STATUS_COLORS)
+
+// Generic silhouette shown in the photo frame as the last-resort fallback,
+// when neither a real Twitch avatar nor an uploaded placeholder photo is
+// available (see resolveAvatarUrl below for the full fallback chain).
+const MC_SILHOUETTE = '<svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7v1H4z"/></svg>'
+
+// Copies the chosen preset's colors onto the widget's CSS custom
+// properties. If Color Preset is set to "Custom", there's no matching
+// entry here, so this is a no-op and the field-driven --mc-* values from
+// widget.css just apply as-is.
+function applyColorPreset() {
+  const preset = MC_PALETTES[MC.fields.colorPreset]
+  if (!preset) return // "custom" -> leave the field-driven CSS variables alone
+  const root = document.querySelector('main')
+  for (const [prop, value] of Object.entries(preset)) {
+    root.style.setProperty(prop, value)
+  }
+}
+
+// Resolves the Font Source field (local/google) into an actual font-family
+// stack and writes it to --mc-font-family, which widget.css reads. There's
+// no "built-in" option here - Tahoma is a proprietary Microsoft font and
+// can't legally be bundled, so Local (defaulting to Tahoma, which ships
+// with Windows/OBS on most streamer PCs) is the baseline instead. Verdana
+// is the closest universal fallback if Tahoma isn't actually installed.
+function applyFontSource() {
+  const root = document.querySelector('main')
+  let family = `Tahoma, Verdana, sans-serif`
+  if (MC.fields.fontSource === 'google' && MC.fields.googleFont.trim()) {
+    family = `'${MC.fields.googleFont.trim()}', Tahoma, Verdana, sans-serif`
+  } else if (MC.fields.fontSource === 'local' && MC.fields.localFontName.trim()) {
+    family = `'${MC.fields.localFontName.trim()}', Verdana, sans-serif`
+  }
+  root.style.setProperty('--mc-font-family', family)
+}
+
+// --- 7TV emotes --------------------------------------------------------
+// StreamElements' own message event already includes Twitch/FFZ/BTTV
+// emotes (see parseMessage below), but never 7TV - so it needs its own
+// fetch-and-map step here, run once at load.
+
+const SEVENTV = {
+  globalUrl: 'https://7tv.io/v3/emote-sets/global',
+  channelUrl: twitchId => `https://7tv.io/v3/users/twitch/${twitchId}`,
+}
+
+// Flattens a 7TV emote-set API response into a simple name -> image-urls map.
+function sevenTVSetToMap(emoteSet) {
+  const out = {}
+  const emotes = (emoteSet && emoteSet.emotes) || []
+  for (const emote of emotes) {
+    const host = emote.data && emote.data.host
+    if (!emote.name || !host) continue
+    const base = host.url.startsWith('http') ? host.url : `https:${host.url}`
+    const files = host.files || []
+    const fileFor = size => {
+      const match = files.find(f => f.name === `${size}x.webp` && f.format === 'WEBP')
+      return match ? `${base}/${match.name}` : `${base}/${size}x.webp`
+    }
+    out[emote.name] = { urls: { 1: fileFor(1), 2: fileFor(2), 4: fileFor(4) } }
+  }
+  return out
+}
+
+// Loads the global 7TV emote set plus this channel's own set, merging both
+// into MC.sevenTV. channel.providerId/id/_id are checked in order since the
+// field StreamElements actually populates isn't consistent.
+async function loadSevenTVEmotes() {
+  const globalSet = await fetchJson(SEVENTV.globalUrl)
+  if (globalSet) Object.assign(MC.sevenTV, sevenTVSetToMap(globalSet))
+
+  const twitchId = MC.channel.providerId || MC.channel.id || MC.channel._id
+  if (twitchId) {
+    const user = await fetchJson(SEVENTV.channelUrl(twitchId))
+    if (user && user.emote_set) Object.assign(MC.sevenTV, sevenTVSetToMap(user.emote_set))
+  }
+}
+
+// StreamElements fires this once when the widget loads, handing over the
+// current field values and channel info. Preview Mode's continuous message
+// loop only starts if both the field is on AND we're in the SE editor
+// (isEditorMode) - it never runs once the widget is actually live.
+window.addEventListener('onWidgetLoad', async obj => {
+  MC.channel = obj.detail.channel
+  readFields(obj.detail.fieldData)
+  applyColorPreset()
+  applyFontSource()
+
+  await loadSevenTVEmotes()
+
+  const { isEditorMode } = await SE_API.getOverlayStatus()
+  toggleClass('mc-preview', MC.fields.previewMode && isEditorMode)
+  toggleClass('mc-list', MC.fields.positionMode === 'list')
+  toggleClass(`mc-dir-${MC.fields.listDirection}`, MC.fields.positionMode === 'list')
+  toggleClass('mc-fixed-width', MC.fields.fixedWidth)
+
+  if (MC.fields.pronounsMode !== 'off') await loadPronounNames()
+  if (MC.fields.previewMode && isEditorMode) sendPreviewMessages(1200)
+})
+
+// StreamElements sends every field value as a string, even for dropdown
+// booleans ("true"/"false"). This coerces the known boolean fields into
+// real booleans, splits the comma-separated list fields into arrays, and
+// collapses the five optional avatar-upload fields into one array of just
+// the ones the streamer actually filled in, so the rest of the code can
+// just use them directly. previewMode is a native checkbox field (not the
+// dropdown true/false pattern used elsewhere), so StreamElements already
+// hands it over as a real boolean - it's left out of boolFields on purpose.
+function readFields(raw) {
+  MC.fields = raw
+
+  const boolFields = [
+    'includeEveryone', 'includeSubs', 'includeVIPs', 'includeMods',
+    'largeEmotes', 'fixedWidth', 'soundEnabled',
+    'pronounsLowercase', 'customPronounColors',
+    'topEdge', 'bottomEdge', 'leftEdge', 'rightEdge',
+  ]
+  for (const key of boolFields) MC.fields[key] = raw[key] === 'true'
+
+  const listFields = ['ignoreUsers', 'ignorePrefixes', 'allowUsers']
+  for (const key of listFields) MC.fields[key] = toList(raw[key])
+
+  MC.fields.avatarImages = [1, 2, 3, 4, 5]
+    .map(n => raw[`avatarImage${n}`])
+    .filter(url => url && url.trim())
+}
+
+// StreamElements' event feed: real chat messages, moderation deletes, and
+// the Send Test Message button (routed through handleTestButton below).
+window.addEventListener('onEventReceived', obj => {
+  const { listener, event } = obj.detail
+  if (listener === 'message') handleMessage(event)
+  else if (listener === 'delete-message') removeCard(event.msgId)
+  else if (listener === 'delete-messages') removeCardsForUser(event.userId)
+  else if (listener === 'event:test') handleTestButton(event)
+})
+
+// Filters button-click events down to just this widget's own Send Test
+// Message button (event.value is a unique string per widget, since
+// multiple button-widgets could share an overlay) before firing a test burst.
+function handleTestButton(event) {
+  if (event.listener !== 'widget-button' || event.value !== 'qntmos_msnchat') return
+  if (event.field !== 'testMessageButton') return
+  sendTestBurst()
+}
+
+// Fires a handful of fake messages in quick succession, using the same
+// PREVIEW_NAMES/PREVIEW_TEXTS pool as Preview Mode (see near the bottom of
+// this file), so you can check layout without waiting on real chat.
+function sendTestBurst(count = 3, gap = 400) {
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const name = PREVIEW_NAMES[randomInt(0, PREVIEW_NAMES.length - 1)]
+      const text = PREVIEW_TEXTS[randomInt(0, PREVIEW_TEXTS.length - 1)]
+      handleMessage({
+        data: {
+          userId: name, nick: name.toLowerCase(), displayName: name,
+          text, emotes: [], badges: [], tags: {},
+          msgId: `${name}_${Date.now()}`,
+        },
+      }, true)
+    }, i * gap)
+  }
+}
+
+// The core message pipeline: filters out ignored users/prefixes/roles
+// (skipped entirely for preview/test messages, so the streamer can always
+// see the widget working), parses emotes, resolves a pronoun and frame
+// color if enabled, builds the card's HTML, and inserts it into the DOM
+// (at the start or end depending on List Direction) before handing off to
+// scheduleReveal() for the entrance animation/positioning.
+function handleMessage(event, isPreview = false) {
+  const data = event.data
+  const {
+    userId = '', nick: username = '', displayName = '', badges = [],
+    text: rawText = '', emotes: rawEmotes = [],
+  } = data
+  let { displayColor: color } = data
+
+  if (!isPreview) {
+    if (startsWithIgnoredPrefix(rawText)) return
+    if (matchesUserList(MC.fields.ignoreUsers, displayName, username)) return
+    if (MC.fields.allowUsers.length && !matchesUserList(MC.fields.allowUsers, displayName, username)) return
+    if (!isPermittedUserLevel(badges)) return
+  }
+
+  playMessageSound()
+
+  const parsed = parseMessage(htmlEscape(rawText), rawEmotes)
+  const emoteSize = sizeForContent(parsed)
+
+  let pronoun = null
+  if (MC.fields.pronounsMode !== 'off') {
+    // Preview/test messages use fake usernames that won't resolve against
+    // the real pronoun API, so they get a random pronoun instead - see
+    // randomPronoun() below.
+    pronoun = isPreview ? randomPronoun() : resolveCachedPronoun(username)
+  }
+
+  const nameForHash = displayName || username
+  const frame = resolveFrameColors(MC.fields.frameColorMode, badges, color, nameForHash)
+  const avatarUrl = resolveAvatarUrl(username, nameForHash)
+  const avatarPending = maybeAwaitAvatar(username, isPreview)
+
+  const msgId = data.msgId || `${username}_${Date.now()}`
+  const cardHtml = buildCardHtml({
+    parsed, name: nameForHash, emoteSize, msgId, userId, badges, pronoun,
+    frame, avatarUrl, isAction: !!data.isAction,
+  })
+
+  const main = document.querySelector('main')
+  if (MC.fields.positionMode === 'list') main.insertAdjacentHTML('afterbegin', cardHtml)
+  else main.insertAdjacentHTML('beforeend', cardHtml)
+
+  scheduleReveal(msgId, avatarPending)
+}
+
+// --- Photo frame color -----------------------------------------------
+// frameColorMode picks between three ways of coloring the glass frame:
+// the chatter's chat role, their own Twitch name color, or a random-but-
+// consistent "presence status" color. All three resolve to the same
+// { light, dark } rgba pair shape, which buildCardHtml writes onto the
+// frame element as inline custom properties (the color is per-message,
+// so it can't live in a static CSS class the way the role palette above
+// conceptually could).
+
+function roleFromBadges(badges) {
+  if (hasBadge(badges, 'broadcaster')) return 'broadcaster'
+  if (hasBadge(badges, 'moderator')) return 'mod'
+  if (hasBadge(badges, 'vip')) return 'vip'
+  if (hasBadge(badges, 'subscriber', 'founder')) return 'sub'
+  return 'regular'
+}
+
+// Splits a #RRGGBB hex color into a light/dark rgba pair for the frame
+// gradient - light is the color as-is, dark is the same hue scaled down.
+function hexToFramePair(hex) {
+  const clean = hex.replace('#', '')
+  const r = parseInt(clean.substr(0, 2), 16) || 0
+  const g = parseInt(clean.substr(2, 2), 16) || 0
+  const b = parseInt(clean.substr(4, 2), 16) || 0
+  return {
+    light: `rgba(${r},${g},${b},0.75)`,
+    dark: `rgba(${Math.round(r * 0.6)},${Math.round(g * 0.6)},${Math.round(b * 0.6)},0.7)`,
+  }
+}
+
+function resolveFrameColors(mode, badges, twitchColor, name) {
+  if (mode === 'status') {
+    const key = MC_STATUS_KEYS[hashString(`${name}_status`) % MC_STATUS_KEYS.length]
+    return MC_STATUS_COLORS[key]
+  }
+  if (mode === 'twitch') {
+    return hexToFramePair(twitchColor || colorFromName(name))
+  }
+  return MC_ROLE_COLORS[roleFromBadges(badges)]
+}
+
+// --- Profile photos -------------------------------------------------
+// Twitch chat messages never carry the sender's real profile picture, so
+// the frame photo is resolved in three tiers: (1) the chatter's real
+// Twitch avatar, looked up through decapi.me - a free public API just for
+// this (https://decapi.me/twitch/avatar/{login} returns the direct image
+// URL as plain text, or "User not found: ..." for a bad login); (2) if
+// that lookup hasn't resolved yet (or the account/API lookup fails), one
+// of the streamer's uploaded placeholder photos (Avatars group, up to 5),
+// assigned deterministically by name so a given chatter always gets the
+// same one; (3) with nothing uploaded either, the neutral silhouette (see
+// MC_SILHOUETTE).
+
+// decapi.me is a shared free API rate-limited to 100 requests/hour, so
+// every lookup (success or failure) is cached for the rest of the session -
+// a chatty viewer or a busy chat only ever costs one request per name. The
+// in-flight promise is memoized too, so the sync resolveAvatarUrl() kicking
+// off a lookup and scheduleReveal() awaiting one share a single request.
+function getLiveAvatarUrl(login) {
+  const key = login.toLowerCase()
+  if (key in MC.liveAvatars) return Promise.resolve(MC.liveAvatars[key])
+  if (!(key in MC.liveAvatarPending)) {
+    MC.liveAvatarPending[key] = fetchText(`https://decapi.me/twitch/avatar/${encodeURIComponent(key)}`)
+      .then(body => {
+        const url = body && body.trim().startsWith('http') ? body.trim() : null
+        MC.liveAvatars[key] = url
+        delete MC.liveAvatarPending[key]
+        return url
+      })
+  }
+  return MC.liveAvatarPending[key]
+}
+
+// Synchronous - the card is inserted right away so list order stays correct.
+// If the live lookup for this login hasn't completed yet, this kicks it off
+// (the promise is memoized in getLiveAvatarUrl) and falls back to the
+// uploaded-photo tier for now; scheduleReveal() then holds the card hidden
+// for a moment so the real photo can land before it animates in - see
+// maybeAwaitAvatar() below.
+function resolveAvatarUrl(login, nameForPlaceholder) {
+  const key = login.toLowerCase()
+  const cached = MC.liveAvatars[key]
+  if (cached === undefined) getLiveAvatarUrl(login) // kick off; promise memoized
+  return cached || pickAvatar(nameForPlaceholder)
+}
+
+// A message from someone we don't have a cached photo for yet holds its
+// reveal briefly for the live lookup, rather than flashing the silhouette
+// or a placeholder and only picking up the real photo on that person's
+// next message (which looked bad for anyone who only says one thing). Same
+// idea as the alert widget. Returns null when there's nothing to wait for -
+// a preview message, or a login already resolved this session - so the card
+// reveals with no delay. The wait is capped so a slow or failed lookup
+// never stalls a card, and it never blocks *other* messages: each card
+// waits on its own lookup independently.
+const AVATAR_REVEAL_WAIT_MS = 1500
+
+function maybeAwaitAvatar(login, isPreview) {
+  const key = login.toLowerCase()
+  if (isPreview || key in MC.liveAvatars) return null
+  return Promise.race([
+    getLiveAvatarUrl(login).then(preloadImage),
+    new Promise(resolve => setTimeout(() => resolve(null), AVATAR_REVEAL_WAIT_MS)),
+  ])
+}
+
+// Resolves with the URL only once the image itself has finished downloading,
+// so the card reveals with the photo already painted rather than a blank
+// frame that fills in a beat later. Resolves null if the image fails to
+// load. The overall wait is still capped by the race in maybeAwaitAvatar.
+function preloadImage(url) {
+  if (!url) return Promise.resolve(null)
+  return new Promise(resolve => {
+    const img = new Image()
+    img.onload = () => resolve(url)
+    img.onerror = () => resolve(null)
+    img.src = url
+  })
+}
+
+// Swaps the real photo onto a card that's in the DOM but not yet revealed,
+// dropping the silhouette if one was showing (see scheduleReveal).
+function applyCardAvatar(el, url) {
+  const photo = el.querySelector('.mc-frame-photo')
+  if (!photo || !url) return
+  photo.style.backgroundImage = `url('${url}')`
+  const svg = photo.querySelector('svg')
+  if (svg) svg.remove()
+}
+
+function pickAvatar(name) {
+  const urls = MC.fields.avatarImages
+  if (!urls.length) return null
+  return urls[hashString(name) % urls.length]
+}
+
+// Small deterministic string hash (djb2-style) used for both the avatar
+// and status-color assignment above - same input always gives the same
+// output, which is what makes a given chatter's look consistent.
+function hashString(str) {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) >>> 0
+  return hash
+}
+
+// --- Pronouns ------------------------------------------------------------
+// Resolved from pronouns.alejo.io, where viewers set their own pronoun -
+// this widget only displays it, never configures it. Lookups are cached in
+// memory per session so the same viewer isn't re-fetched on every message.
+
+// Returns a cached pronoun if we have a fresh one; otherwise kicks off an
+// async lookup for next time and returns null for this message. This keeps
+// handleMessage() synchronous rather than making every message wait on a
+// network round-trip.
+function resolveCachedPronoun(username) {
+  const cached = MC.pronounCache[username.toLowerCase()]
+  if (cached && cached.expiresAt > Date.now()) return MC.pronounNames[cached.id] || null
+  getPronounAsync(username) // fire and forget; updates cache for next message
+  return null
+}
+
+async function getPronounAsync(username) {
+  const lower = username.toLowerCase()
+  const res = await fetchJson(`https://pronouns.alejo.io/api/users/${lower}`)
+  const entry = res && res[0]
+  if (entry) {
+    MC.pronounCache[lower] = { id: entry.pronoun_id, expiresAt: Date.now() + 5 * 60 * 1000 }
+  }
+}
+
+// Loads the full display-name list once at startup (e.g. "she" -> "she/her"),
+// used both to render a resolved pronoun ID and to pick a random one for previews.
+async function loadPronounNames() {
+  const list = await fetchJson('https://pronouns.alejo.io/api/pronouns')
+  if (list) for (const p of list) MC.pronounNames[p.name] = p.display
+}
+
+function randomPronoun() {
+  const keys = Object.keys(MC.pronounNames)
+  if (!keys.length) return null
+  return MC.pronounNames[keys[Math.floor(Math.random() * keys.length)]]
+}
+
+// Assembles one message card's HTML: photo frame, badges/pronoun/name row,
+// and the message text/emotes.
+function buildCardHtml({ parsed, name, emoteSize, msgId, userId, badges, pronoun, frame, avatarUrl, isAction }) {
+  let displayName = name
+  let pronounSuffixHtml = ''
+  if (MC.fields.pronounsMode === 'suffix' && pronoun) {
+    pronounSuffixHtml = `<span class="mc-pronoun-suffix">(${MC.fields.pronounsLowercase ? pronoun.toLowerCase() : pronoun})</span>`
+  }
+
+  const classes = ['mc-card', `mc-emotesize-${MC.fields.largeEmotes ? emoteSize : 1}`]
+
+  const badgeHtml = badges.map(b => `<img class="mc-badge" src="${b.url}" alt="${b.type}">`).join('')
+
+  const pronounBadgeHtml = (MC.fields.pronounsMode === 'badge' && pronoun)
+    ? `<span class="mc-pronoun${MC.fields.customPronounColors ? ' mc-pronoun-custom' : ''}">${MC.fields.pronounsLowercase ? pronoun.toLowerCase() : pronoun}</span>`
+    : ''
+
+  const contentHtml = parsed.map(part =>
+    part.type === 'emote'
+      ? `<img class="mc-emote" src="${emoteUrl(part.data)}" alt="${part.data.name}">`
+      : `<span>${part.data}</span>`
+  ).join('')
+
+  const photoStyle = avatarUrl ? ` style="background-image:url('${avatarUrl}')"` : ''
+  const photoInner = avatarUrl ? '' : MC_SILHOUETTE
+
+  return `
+    <section class="${classes.join(' ')}" data-message-id="${msgId}" data-user-id="${userId}">
+      <div class="mc-frame" style="--mc-frame-1:${frame.light}; --mc-frame-2:${frame.dark}">
+        <div class="mc-frame-photo"${photoStyle}>${photoInner}</div>
+      </div>
+      <div class="mc-body">
+        <div class="mc-name-row">${badgeHtml}${pronounBadgeHtml}<span class="mc-name">${escapeHtml(displayName)}</span>${pronounSuffixHtml}</div>
+        <div class="mc-text${isAction ? ' mc-action' : ''}">${contentHtml}</div>
+      </div>
+    </section>
+  `
+}
+
+// Delays a new card becoming visible (and, for floating modes, positioned)
+// by the Delay Before Visible field, then by a short wait for the live
+// profile-photo lookup if one is still pending (avatarPending - see
+// maybeAwaitAvatar). Building the element immediately but keeping it hidden
+// until then means list-mode layout order is already correct by the time it
+// reveals. avatarPending is null when there's nothing to wait on.
+function scheduleReveal(msgId, avatarPending = null) {
+  const el = document.querySelector(`.mc-card[data-message-id="${msgId}"]`)
+  if (!el) return
+
+  const reveal = () => {
+    if (!el.isConnected || el.classList.contains('mc-leaving')) return // deleted while it waited
+    if (MC.fields.positionMode !== 'list') positionFloatingCard(el)
+    el.classList.add('mc-visible')
+    if (MC.fields.animation !== 'none') el.classList.add(`mc-anim-${MC.fields.animation}`)
+    MC.cardCount++
+    enforceMaxCards()
+    if (MC.fields.lifetime > 0) {
+      setTimeout(() => removeCard(msgId), MC.fields.lifetime * 1000)
+    }
+  }
+
+  setTimeout(() => {
+    if (!avatarPending) return reveal()
+    avatarPending.then(url => {
+      applyCardAvatar(el, url)
+      reveal()
+    })
+  }, MC.fields.delay * 1000)
+}
+
+// Places a card at a random spot within the canvas (Random mode), or
+// hands off to positionAlongEdge() for Random Along Edges mode.
+function positionFloatingCard(el) {
+  if (MC.fields.positionMode === 'random-edge') {
+    positionAlongEdge(el)
+    return
+  }
+
+  const main = document.querySelector('main')
+  const w = el.offsetWidth || 250
+  const h = el.offsetHeight || 60
+  const pad = MC.fields.padding
+  const maxX = Math.max(pad, main.clientWidth - pad - w)
+  const maxY = Math.max(pad, main.clientHeight - pad - h)
+  el.style.left = `${randomInt(pad, maxX)}px`
+  el.style.top = `${randomInt(pad, maxY)}px`
+}
+
+// Picks a random enabled edge (top/bottom/left/right) and places the card
+// along it, offset by up to Edge Deviation px. Falls back to fully random
+// placement if no edges are enabled.
+function positionAlongEdge(el) {
+  const main = document.querySelector('main')
+  const w = el.offsetWidth || 250
+  const h = el.offsetHeight || 60
+  const pad = MC.fields.padding
+  const deviation = randomInt(0, MC.fields.edgeDeviation)
+
+  const maxX = Math.max(pad, main.clientWidth - pad - w)
+  const maxY = Math.max(pad, main.clientHeight - pad - h)
+  const randomX = randomInt(pad, maxX)
+  const randomY = randomInt(pad, maxY)
+
+  const candidates = []
+  if (MC.fields.topEdge) candidates.push({ top: pad + deviation, left: randomX })
+  if (MC.fields.bottomEdge) candidates.push({ bottom: pad + deviation, left: randomX })
+  if (MC.fields.leftEdge) candidates.push({ left: pad + deviation, top: randomY })
+  if (MC.fields.rightEdge) candidates.push({ right: pad + deviation, top: randomY })
+
+  const chosen = candidates.length
+    ? candidates[randomInt(0, candidates.length - 1)]
+    : { left: randomX, top: randomY } // no edges enabled - fall back to fully random
+
+  el.style.left = ''
+  el.style.top = ''
+  el.style.right = ''
+  el.style.bottom = ''
+  for (const [side, value] of Object.entries(chosen)) {
+    el.style[side] = `${value}px`
+  }
+}
+
+// Evicts the oldest card once Max messages on screen at once is exceeded.
+// "Oldest" is the last element for List mode (new ones are inserted at the
+// front) and the first element otherwise.
+function enforceMaxCards() {
+  if (!MC.fields.maxMessages || MC.cardCount <= MC.fields.maxMessages) return
+  const all = document.querySelectorAll('.mc-card:not(.mc-leaving)')
+  const oldest = MC.fields.positionMode === 'list' ? all[all.length - 1] : all[0]
+  if (oldest) fadeAndRemove(oldest)
+}
+
+function removeCard(msgId) {
+  document.querySelectorAll(`.mc-card[data-message-id="${msgId}"]`).forEach(fadeAndRemove)
+}
+
+// Handles StreamElements' "delete all messages from this user" moderation
+// event - with no userId (a full chat clear) it removes every card instead.
+function removeCardsForUser(userId) {
+  if (!userId) {
+    document.querySelectorAll('.mc-card').forEach(fadeAndRemove)
+    MC.cardCount = 0
+    return
+  }
+  document.querySelectorAll(`.mc-card[data-user-id="${userId}"]`).forEach(fadeAndRemove)
+}
+
+function fadeAndRemove(el) {
+  if (el.classList.contains('mc-leaving')) return
+  if (el.classList.contains('mc-visible')) MC.cardCount-- // hidden cards were never counted
+  el.classList.add('mc-leaving')
+  setTimeout(() => el.remove(), 400) // matches the mc-fade-out animation duration in widget.css
+}
+
+// Splits a message into alternating text/emote parts for rendering. Twitch's
+// own emotes arrive pre-located in twitchEmotes (along with FFZ/BTTV, which
+// StreamElements folds into the same array), but 7TV never does, so it's
+// matched here by scanning the raw text for whole-word occurrences of any
+// known 7TV emote name before everything gets combined and split.
+function parseMessage(text, twitchEmotes) {
+  const combined = [...twitchEmotes]
+
+  for (const name of Object.keys(MC.sevenTV)) {
+    let index = text.indexOf(name)
+    while (index !== -1) {
+      const before = text[index - 1]
+      const after = text[index + name.length]
+      if ((!before || /\s/.test(before)) && (!after || /\s/.test(after))) {
+        combined.push({ provider: 'sevenTV', name, start: index, end: index + name.length - 1 })
+      }
+      index = text.indexOf(name, index + 1)
+    }
+  }
+
+  const active = combined.filter(e =>
+    e.provider === 'sevenTV' || ['twitch', 'ffz', 'bttv', 'sticker'].includes(e.type)
+  )
+
+  if (active.length === 0) return [{ type: 'text', data: text }]
+
+  const escapedNames = active.map(e => e.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const regex = new RegExp(`(?<=\\s|^)(?:${escapedNames.sort((a, b) => b.length - a.length).join('|')})(?=\\s|$|[.,!])`, 'g')
+
+  const textChunks = text.split(regex)
+  const last = textChunks.pop()
+  const parts = []
+  textChunks.forEach((chunk, i) => {
+    parts.push({ type: 'text', data: chunk })
+    parts.push({ type: 'emote', data: active[i] })
+  })
+  parts.push({ type: 'text', data: last })
+  return parts
+}
+
+// Resolves the actual image URL for one parsed emote part - 7TV uses its own
+// map (built by loadSevenTVEmotes), native Twitch emotes are built from the
+// emote ID, and everything else (FFZ/BTTV) already carries a urls object.
+function emoteUrl(emote) {
+  if (emote.provider === 'sevenTV') return MC.sevenTV[emote.name].urls[4]
+  if (emote.type === 'twitch') {
+    return `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/default/light/3.0`
+  }
+  return emote.urls?.[4] || emote.urls?.[2] || emote.urls?.[1]
+}
+
+// Determines the emote size class for a message: real text present = normal
+// inline size, a single emote with no text = biggest, multiple emotes with
+// no text = medium. Only applies when Larger Emotes for Emote-Only Messages
+// is on - see buildCardHtml above.
+function sizeForContent(parts) {
+  let emoteCount = 0
+  for (const part of parts) {
+    if (part.type === 'emote') emoteCount++
+    else if (part.data.trim() !== '') return 1
+  }
+  return emoteCount > 1 ? 2 : 4
+}
+
+function hasBadge(badges, ...types) {
+  return badges.some(b => types.includes(b.type))
+}
+
+// Shared pool of placeholder names/messages for both Preview Mode and Send
+// Test Message - deliberately includes a long message (wrapping test), a
+// short one, and a name with a space in it.
+const PREVIEW_NAMES = [
+  'Quantumtherobot', 'mocchipinku', 'coolviewer123', 'notabot', 'epicChatter', 'wintonOverwatch', 'my favorite viewer',
+]
+
+const PREVIEW_TEXTS = [
+  'HYPE',
+  'this is a very long message specifically designed to test if the chat doesnt break when someone sends a long message, if it doesnt this should look fine',
+  'gg well played',
+  'Hello chat',
+  'are we live?',
+  'Jarvis, clip that',
+  'this is chat is very cool whoever designed must be cool and handsome',
+  'NICE',
+  'i like this',
+  'what game is this',
+]
+
+// Preview Mode's continuous loop - only ever started from onWidgetLoad when
+// both the field is on and we're in the StreamElements editor (never live).
+// Keeps rescheduling itself via setTimeout rather than setInterval so it can
+// check MC.fields.previewMode fresh each tick and stop cleanly if turned off.
+function sendPreviewMessages(gap) {
+  const tick = () => {
+    if (!MC.fields.previewMode) return
+    const name = PREVIEW_NAMES[randomInt(0, PREVIEW_NAMES.length - 1)]
+    const text = PREVIEW_TEXTS[randomInt(0, PREVIEW_TEXTS.length - 1)]
+    handleMessage({
+      data: {
+        userId: name, nick: name.toLowerCase(), displayName: name,
+        text, emotes: [], badges: [], tags: {},
+        msgId: `${name}_${Date.now()}`,
+      },
+    }, true)
+    setTimeout(tick, gap)
+  }
+  tick()
+}
+
+// Plays the New Message sound, if enabled and a sound was actually picked
+// in the field's sound picker (its value is an empty string until the
+// streamer chooses one - no sound ships selected by default).
+function playMessageSound() {
+  if (!MC.fields.soundEnabled || !MC.fields.messageSound) return
+  const audio = new Audio(MC.fields.messageSound)
+  audio.volume = Math.min(100, Math.max(0, MC.fields.messageSoundVolume)) / 100
+  audio.play().catch(() => {})
+}
+
+async function fetchJson(url) {
+  try {
+    const res = await fetch(url)
+    return res.ok ? await res.json() : null
+  } catch {
+    return null
+  }
+}
+
+async function fetchText(url) {
+  try {
+    const res = await fetch(url)
+    return res.ok ? await res.text() : null
+  } catch {
+    return null
+  }
+}
+
+function toList(str = '') {
+  return str.split(',').map(s => s.trim()).filter(Boolean)
+}
+
+function matchesUserList(list, ...names) {
+  const lower = names.map(n => (n || '').toLowerCase())
+  return list.some(u => lower.includes(u.toLowerCase()))
+}
+
+function startsWithIgnoredPrefix(text) {
+  return MC.fields.ignorePrefixes.some(p => text.startsWith(p))
+}
+
+// Everyone passes if Show Messages From Everyone is on. Otherwise the
+// chatter needs a matching badge - broadcaster always passes regardless of
+// the other toggles.
+function isPermittedUserLevel(badges) {
+  if (MC.fields.includeEveryone) return true
+  if (!badges.length) return false
+  const allowed = ['broadcaster']
+  if (MC.fields.includeSubs) allowed.push('subscriber', 'founder')
+  if (MC.fields.includeVIPs) allowed.push('vip')
+  if (MC.fields.includeMods) allowed.push('moderator')
+  return hasBadge(badges, ...allowed)
+}
+
+// Deterministic fallback color for chatters whose message didn't carry a
+// Twitch display color - same name always maps to the same color. Used
+// both for the message-name fallback color and as the frameColorMode:
+// "twitch" fallback when there's no real Twitch color to work with.
+function colorFromName(name) {
+  const palette = ['#FF4A80', '#FF7070', '#FA8E4B', '#FEE440', '#5FFF77', '#00F5D4', '#00BBF9', '#4371FB', '#9B5DE5', '#F670DD']
+  const sum = [...(name || '')].reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
+  return palette[sum % palette.length]
+}
+
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
+function toggleClass(name, condition) {
+  document.querySelector('main').classList.toggle(name, !!condition)
+}
+
+// Escapes viewer-supplied text before it's inserted as HTML, so a chatter
+// can't break the layout (or inject markup) with their username or message.
+function htmlEscape(text) {
+  return text.replace(/[<>"'^=]/g, ch => `&#${ch.charCodeAt(0)};`)
+}
+
+function escapeHtml(text) {
+  return htmlEscape(text)
+}
+
+</script>
+<script>
+// Fire onWidgetLoad the same way StreamElements does after the widget loads.
+window.dispatchEvent(new CustomEvent('onWidgetLoad', {
+  detail: {
+    fieldData: FIELD_DATA,
+    channel: { username: 'quantumtherobot', id: null, providerId: null, avatar: '' },
+    session: { data: {} },
+    recents: [],
+    currency: { code: 'USD', name: 'U.S. Dollar', symbol: '$' },
+    overlay: { isEditorMode: true, muted: false },
+    emulated: true,
+  },
+}));
+</script>
+</body>
+</html>

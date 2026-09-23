@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=800, initial-scale=1">
+<title>Fantasy Chat - preview</title>
+<style>
+/* Preview frame: fixed 800x450 canvas on a neutral background.
+   Change --preview-bg to "transparent" for a see-through background. */
+:root { --preview-bg: #3a3a3a; }
+html, body { margin: 0; padding: 0; }
+body { position: relative; width: 800px; height: 450px; overflow: hidden; }
+/* Separate backdrop element: widgets force html/body transparent for OBS. */
+#preview-backdrop { position: fixed; left: 0; top: 0; width: 800px; height: 450px; z-index: -1; background: var(--preview-bg); }
+</style>
+<style id="hide-editor-overlay">
+main.qfc-preview::before, main.qfc-preview::after { display: none !important; }
+</style>
+<style>
+/* Fantasy Chat - original widget by Quantumtherobot */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+}
+
+html, body, body > div {
+  background: transparent !important;
+}
+
+main {
+  position: absolute;
+  inset: 0;
+  background: transparent !important;
+  font-size: 14px;
+
+  --qfc-bg: #150F0A;
+  --qfc-border: #D2B46E;
+  --qfc-name: #F4E7BE;
+  --qfc-text: #E8D89A;
+  --qfc-pronoun: #D2B46E;
+  --qfc-lightning: #F9CA24;
+  --qfc-body-font: 'Lato', sans-serif;
+}
+
+main.qfc-list {
+  display: flex;
+  padding: 30px;
+  align-items: flex-end;
+}
+
+main.qfc-dir-bottom { flex-direction: column-reverse; }
+main.qfc-dir-top { flex-direction: column; }
+main.qfc-dir-left { flex-direction: row; }
+main.qfc-dir-right { flex-direction: row-reverse; }
+
+main.qfc-dir-bottom .qfc-message,
+main.qfc-dir-top .qfc-message {
+  margin-bottom: 12px;
+}
+main.qfc-dir-left .qfc-message,
+main.qfc-dir-right .qfc-message {
+  margin-right: 12px;
+}
+
+main.qfc-preview::before {
+  content: '';
+  position: absolute;
+  inset: 30px;
+  border: 8px dashed #fff;
+  box-shadow: 0 0 6px #000;
+  background: #0007;
+  z-index: -20;
+}
+
+main.qfc-preview::after {
+  content: 'Preview Mode is on \a Turn it off in fields once you are done editing.';
+  white-space: pre-wrap;
+  position: absolute;
+  inset: 30px;
+  padding: 24px;
+  color: #fff;
+  font-family: 'Lato', sans-serif;
+  text-align: center;
+  z-index: -19;
+}
+
+.qfc-message {
+  position: relative;
+  isolation: isolate;
+  flex-shrink: 0;
+  direction: ltr;
+  font-family: var(--qfc-body-font, 'Lato', sans-serif);
+  background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--qfc-bg) 55%, #3c2d14) 0%, var(--qfc-bg) 100%);
+  border: 1px solid color-mix(in srgb, var(--qfc-border) 40%, transparent);
+  border-radius: 10px;
+  padding: 14px 20px 12px;
+  max-width: 420px;
+  opacity: 0;
+  visibility: hidden;
+
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--qfc-border) 60%, transparent),
+    0 0 0 6px color-mix(in srgb, var(--qfc-border) 45%, transparent),
+    0 12px 48px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 color-mix(in srgb, var(--qfc-lightning) 12%, transparent);
+}
+
+.qfc-message::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+main.qfc-fixed-width .qfc-message {
+  width: 420px;
+}
+
+.qfc-message.qfc-visible {
+  visibility: visible;
+  opacity: 1;
+}
+
+.qfc-message.qfc-leaving {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.qfc-anim-pop.qfc-visible { animation: qfc-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.qfc-anim-fade.qfc-visible { animation: qfc-fade 0.35s ease both; }
+.qfc-anim-fade-up.qfc-visible { animation: qfc-fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.qfc-anim-fade-down.qfc-visible { animation: qfc-fade-down 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.qfc-anim-fade-left.qfc-visible { animation: qfc-fade-left 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.qfc-anim-fade-right.qfc-visible { animation: qfc-fade-right 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes qfc-pop {
+  0% { transform: scale(0.7); opacity: 0; }
+  60% { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes qfc-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes qfc-fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes qfc-fade-down {
+  from { opacity: 0; transform: translateY(-16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes qfc-fade-left {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes qfc-fade-right {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.qfc-name-row {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.qfc-name {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 0.86em;
+  letter-spacing: 0.12em;
+  color: var(--qfc-name);
+  text-transform: uppercase;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+
+.qfc-pronoun-suffix {
+  font-size: 0.75em;
+  font-style: italic;
+  color: color-mix(in srgb, var(--qfc-pronoun) 65%, transparent);
+}
+
+.qfc-pronoun-badge {
+  font-family: 'Cinzel', serif;
+  font-size: 0.65em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #150F0A;
+  border: 1px solid #D2B46E;
+  color: #E8D89A;
+}
+
+.qfc-badge {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+}
+
+.qfc-text {
+  position: relative;
+  font-size: 1.08em;
+  font-weight: normal;
+  color: var(--qfc-text);
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+
+.qfc-text.qfc-action {
+  font-style: italic;
+}
+
+.qfc-emote {
+  height: 1.6em;
+  width: auto;
+  vertical-align: middle;
+  margin: -0.2em 1px;
+}
+
+.qfc-emote.qfc-emote-2 { height: 2.4em; }
+.qfc-emote.qfc-emote-4 { height: 3.4em; }
+
+.qfc-lightning-wrap {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 20;
+}
+
+.qfc-lightning-wrap.qfc-lightning-active {
+  opacity: 1;
+}
+
+.qfc-lightning-wrap rect {
+  fill: none;
+  stroke-width: 2;
+  filter: url('#qfc-glow');
+  stroke: var(--qfc-lightning);
+  animation: qfc-flicker 2.4s ease-in-out infinite;
+}
+
+.qfc-lightning-wrap .qfc-line-2 {
+  animation-delay: 0.6s;
+}
+
+@keyframes qfc-flicker {
+  0%, 100% { stroke-opacity: 0.55; }
+  20% { stroke-opacity: 1; }
+  35% { stroke-opacity: 0.7; }
+  55% { stroke-opacity: 1; }
+  70% { stroke-opacity: 0.6; }
+  85% { stroke-opacity: 0.95; }
+}
+
+</style>
+<style>html,body{background:transparent!important}</style></head>
+<body>
+<aside id="preview-backdrop"></aside>
+<!-- Fantasy Chat - original widget by Quantumtherobot -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@400;700&display=swap"
+  rel="stylesheet"
+/>
+<link
+  href="https://fonts.googleapis.com/css2?family=EB Garamond&display=swap"
+  rel="stylesheet"
+/>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="qfc-glow">
+      <feGaussianBlur class="blur" result="coloredBlur" stdDeviation="2"></feGaussianBlur>
+      <feTurbulence type="fractalNoise" baseFrequency="0.075" numOctaves="0.3" seed="0" result="turbulence">
+        <animate attributeName="seed" values="0;9;18;27;9;0" dur="3.2s" repeatCount="indefinite"></animate>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="30" xChannelSelector="R" yChannelSelector="G" result="displace"></feDisplacementMap>
+      <feMerge>
+        <feMergeNode in="coloredBlur"></feMergeNode>
+        <feMergeNode in="coloredBlur"></feMergeNode>
+        <feMergeNode in="coloredBlur"></feMergeNode>
+        <feMergeNode in="displace"></feMergeNode>
+        <feMergeNode in="SourceGraphic"></feMergeNode>
+      </feMerge>
+    </filter>
+  </defs>
+</svg>
+
+<main></main>
+<script>
+// ======================= PREVIEW SETTINGS =======================
+// Color preset. Options: 'custom', 'tavern', 'parchment', 'midnightArcane', 'emeraldGrove', 'crimsonCourt', 'frostspire', 'qntmos'
+const PRESET = "tavern";
+// Show the "Preview Mode is on" overlay the widget draws in the SE editor.
+const SHOW_EDITOR_OVERLAY = false;
+// ================================================================
+
+// Default values from fields.json (what StreamElements would send).
+const FIELD_DATA = {
+  "testMessageButton": "qntmos_fantasychat",
+  "previewMode": true,
+  "colorPreset": "tavern",
+  "bgColor": "#150F0A",
+  "borderColor": "#D2B46E",
+  "nameColor": "#F4E7BE",
+  "textColor": "#E8D89A",
+  "pronounColor": "#D2B46E",
+  "lightningColor": "#F9CA24",
+  "listDirection": "bottom",
+  "listAlignment": "flex-end",
+  "padding": 30,
+  "marginSize": 12,
+  "lifetime": 20,
+  "maxMessages": 8,
+  "animation": "fade-up",
+  "delay": 0,
+  "lightningEnabled": true,
+  "lightningOnHighlight": true,
+  "lightningOnBits": true,
+  "lightningBitsThreshold": 100,
+  "lightningDuration": 4,
+  "maxWidth": 420,
+  "fixedWidth": "false",
+  "fontSource": "built-in",
+  "localFontName": "",
+  "googleFont": "EB Garamond",
+  "fontWeight": "normal",
+  "fontSize": 14,
+  "textDirection": "ltr",
+  "largeEmotes": "true",
+  "pronounsMode": "suffix",
+  "pronounsLowercase": "false",
+  "customPronounColors": "false",
+  "pronounBackgroundColor": "#150F0A",
+  "pronounBorderColor": "#D2B46E",
+  "pronounTextColor": "#E8D89A",
+  "includeEveryone": "true",
+  "includeSubs": "true",
+  "includeVIPs": "true",
+  "includeMods": "true",
+  "allowUsers": "",
+  "ignoreUsers": "StreamElements, Streamlabs, Nightbot",
+  "ignorePrefixes": "!",
+  "creditAuthor": "Quantumtherobot",
+  "pronounSetupNote": "pronouns.alejo.io"
+};
+FIELD_DATA["colorPreset"] = PRESET;
+FIELD_DATA["previewMode"] = true;
+
+if (SHOW_EDITOR_OVERLAY) document.getElementById('hide-editor-overlay')?.remove();
+
+// Minimal stand-in for the StreamElements API: reports editor mode so the
+// widget's built-in preview/test loop runs. Everything else is a no-op.
+window.SE_API = {
+  getOverlayStatus: () => Promise.resolve({ isEditorMode: true, muted: false }),
+  store: { get: () => Promise.resolve(null), set: () => {} },
+  counters: { get: () => Promise.resolve({ count: 0 }) },
+  resumeQueue: () => {},
+  sanitize: m => Promise.resolve({ result: { message: m.message } }),
+  cheerFilter: m => Promise.resolve(m),
+  setField: () => {},
+};
+</script>
+<script>
+// Fantasy Chat - original widget by Quantumtherobot
+
+const QFC = {
+  fields: {},
+  channel: {},
+  messageCount: 0,
+  pronounNames: {},
+  pronounCache: {},
+  sevenTV: {},
+}
+
+const QFC_PALETTES = {
+  tavern: {
+    '--qfc-bg': '#150F0A', '--qfc-border': '#D2B46E', '--qfc-name': '#F4E7BE',
+    '--qfc-text': '#E8D89A', '--qfc-pronoun': '#D2B46E', '--qfc-lightning': '#F9CA24',
+  },
+  parchment: {
+    '--qfc-bg': '#1F1508', '--qfc-border': '#C98A3A', '--qfc-name': '#F5DDA6',
+    '--qfc-text': '#E0B37A', '--qfc-pronoun': '#C98A3A', '--qfc-lightning': '#FFC966',
+  },
+  midnightArcane: {
+    '--qfc-bg': '#0A0A16', '--qfc-border': '#6C63FF', '--qfc-name': '#C9C3FF',
+    '--qfc-text': '#A8A0F5', '--qfc-pronoun': '#6C63FF', '--qfc-lightning': '#8B7FFF',
+  },
+  emeraldGrove: {
+    '--qfc-bg': '#0D160D', '--qfc-border': '#4CAF6D', '--qfc-name': '#C9E8B8',
+    '--qfc-text': '#9ED9A8', '--qfc-pronoun': '#4CAF6D', '--qfc-lightning': '#6EE18A',
+  },
+  crimsonCourt: {
+    '--qfc-bg': '#170808', '--qfc-border': '#B5453A', '--qfc-name': '#F0C2A0',
+    '--qfc-text': '#E39A83', '--qfc-pronoun': '#B5453A', '--qfc-lightning': '#FF6B4A',
+  },
+  frostspire: {
+    '--qfc-bg': '#0A1218', '--qfc-border': '#6FB8D6', '--qfc-name': '#DCEFF7',
+    '--qfc-text': '#A9D4E8', '--qfc-pronoun': '#6FB8D6', '--qfc-lightning': '#7FE0FF',
+  },
+  qntmos: {
+    '--qfc-bg': '#0A0A14', '--qfc-border': '#30E8E8', '--qfc-name': '#30E8E8',
+    '--qfc-text': '#C9BEFF', '--qfc-pronoun': '#8D6CAA', '--qfc-lightning': '#30E893',
+  },
+}
+
+function applyColorPreset() {
+  const preset = QFC_PALETTES[QFC.fields.colorPreset]
+  if (!preset) return
+  const root = document.querySelector('main')
+  for (const [prop, value] of Object.entries(preset)) {
+    root.style.setProperty(prop, value)
+  }
+}
+
+const SEVENTV = {
+  globalUrl: 'https://7tv.io/v3/emote-sets/global',
+  channelUrl: twitchId => `https://7tv.io/v3/users/twitch/${twitchId}`,
+}
+
+function sevenTVSetToMap(emoteSet) {
+  const out = {}
+  const emotes = (emoteSet && emoteSet.emotes) || []
+  for (const emote of emotes) {
+    const host = emote.data && emote.data.host
+    if (!emote.name || !host) continue
+    const base = host.url.startsWith('http') ? host.url : `https:${host.url}`
+    const files = host.files || []
+    const fileFor = size => {
+      const match = files.find(f => f.name === `${size}x.webp` && f.format === 'WEBP')
+      return match ? `${base}/${match.name}` : `${base}/${size}x.webp`
+    }
+    out[emote.name] = { urls: { 1: fileFor(1), 2: fileFor(2), 4: fileFor(4) } }
+  }
+  return out
+}
+
+async function loadSevenTVEmotes() {
+  const globalSet = await fetchJson(SEVENTV.globalUrl)
+  if (globalSet) Object.assign(QFC.sevenTV, sevenTVSetToMap(globalSet))
+
+  const twitchId = QFC.channel.providerId || QFC.channel.id || QFC.channel._id
+  if (twitchId) {
+    const user = await fetchJson(SEVENTV.channelUrl(twitchId))
+    if (user && user.emote_set) Object.assign(QFC.sevenTV, sevenTVSetToMap(user.emote_set))
+  }
+}
+
+function applyFontSource() {
+  const root = document.querySelector('main')
+  let family = `'Lato', sans-serif`
+  if (QFC.fields.fontSource === 'local' && QFC.fields.localFontName.trim()) {
+    family = `'${QFC.fields.localFontName.trim()}', 'Lato', sans-serif`
+  } else if (QFC.fields.fontSource === 'google' && QFC.fields.googleFont.trim()) {
+    family = `'${QFC.fields.googleFont.trim()}', 'Lato', sans-serif`
+  }
+  root.style.setProperty('--qfc-body-font', family)
+}
+
+window.addEventListener('onWidgetLoad', async obj => {
+  QFC.channel = obj.detail.channel
+  readFields(obj.detail.fieldData)
+  applyColorPreset()
+  applyFontSource()
+
+  await loadSevenTVEmotes()
+
+  const { isEditorMode } = await SE_API.getOverlayStatus()
+  toggleClass('qfc-preview', QFC.fields.previewMode && isEditorMode)
+  toggleClass('qfc-list', true)
+  toggleClass(`qfc-dir-${QFC.fields.listDirection}`, true)
+  toggleClass('qfc-fixed-width', QFC.fields.fixedWidth)
+
+  if (QFC.fields.pronounsMode !== 'off') await loadPronounNames()
+  if (QFC.fields.previewMode && isEditorMode) sendPreviewMessages(1200)
+})
+
+function readFields(raw) {
+  QFC.fields = raw
+
+  const boolFields = [
+    'includeEveryone', 'includeSubs', 'includeVIPs', 'includeMods',
+    'largeEmotes', 'fixedWidth', 'pronounsLowercase', 'customPronounColors',
+    'lightningEnabled', 'lightningOnHighlight', 'lightningOnBits',
+  ]
+  for (const key of boolFields) QFC.fields[key] = raw[key] === 'true' || raw[key] === true
+
+  // previewMode ships as a native checkbox field (already boolean)
+  QFC.fields.previewMode = raw.previewMode === true || raw.previewMode === 'true'
+
+  const listFields = ['ignoreUsers', 'ignorePrefixes', 'allowUsers']
+  for (const key of listFields) QFC.fields[key] = toList(raw[key])
+}
+
+window.addEventListener('onEventReceived', obj => {
+  const { listener, event } = obj.detail
+  if (listener === 'message') handleMessage(event)
+  else if (listener === 'cheer-latest') handleCheerEvent(event)
+  else if (listener === 'delete-message') removeMessage(event.msgId)
+  else if (listener === 'delete-messages') removeMessagesForUser(event.userId)
+  else if (listener === 'event:test') handleTestButton(event)
+})
+
+function handleTestButton(event) {
+  if (event.listener !== 'widget-button' || event.value !== 'qntmos_fantasychat') return
+  if (event.field !== 'testMessageButton') return
+  sendTestBurst()
+}
+
+function sendTestBurst(count = 3, gap = 400) {
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const name = PREVIEW_NAMES[randomInt(0, PREVIEW_NAMES.length - 1)]
+      const text = PREVIEW_TEXTS[randomInt(0, PREVIEW_TEXTS.length - 1)]
+      handleMessage({
+        data: {
+          userId: name, nick: name.toLowerCase(), displayName: name,
+          text, emotes: [], badges: [], tags: {},
+          msgId: `${name}_${Date.now()}`,
+        },
+      }, true)
+    }, i * gap)
+  }
+}
+
+function bitsFromMessage(data) {
+  const tagBits = data.tags && data.tags.bits
+  const amount = tagBits != null ? parseInt(tagBits) : parseInt(data.amount || 0)
+  return isNaN(amount) ? 0 : amount
+}
+
+function handleCheerEvent(event) {
+  const data = event.data || event
+  const displayName = data.displayName || data.name || data.username || 'Anonymous'
+  const username = data.username || displayName
+  const amount = parseInt(data.amount || 0) || 0
+  const text = data.message || data.text || `cheered ${amount} bits`
+
+  handleMessage({
+    data: {
+      userId: data.userId || username,
+      nick: username.toLowerCase(),
+      displayName,
+      text,
+      emotes: [],
+      badges: [],
+      tags: { bits: String(amount) },
+      msgId: `${username}_${Date.now()}`,
+    },
+  })
+}
+
+function handleMessage(event, isPreview = false) {
+  const data = event.data
+  const {
+    userId = '', nick: username = '', displayName = '', badges = [],
+    text: rawText = '', emotes: rawEmotes = [],
+  } = data
+
+  if (startsWithIgnoredPrefix(rawText)) return
+  if (QFC.fields.allowUsers.length && !matchesUserList(QFC.fields.allowUsers, displayName, username)) return
+  if (matchesUserList(QFC.fields.ignoreUsers, displayName, username)) return
+  if (!isPermittedUserLevel(badges)) return
+
+  const isHighlighted = !!(data.tags && data.tags['msg-id'] === 'highlighted-message')
+  const bits = bitsFromMessage(data)
+  const isAction = !!data.isAction
+
+  const parsed = parseMessage(htmlEscape(rawText), rawEmotes)
+  const emoteSize = sizeForContent(parsed)
+
+  let pronoun = null
+  if (QFC.fields.pronounsMode !== 'off') {
+    pronoun = isPreview ? randomPronoun() : resolveCachedPronoun(username)
+  }
+
+  const msgId = data.msgId || `${username}_${Date.now()}`
+  const html = buildMessageHtml({
+    parsed, name: displayName || username, emoteSize, isAction,
+    msgId, userId, badges, pronoun,
+  })
+
+  const main = document.querySelector('main')
+  main.insertAdjacentHTML('afterbegin', html)
+
+  const shouldFlash = QFC.fields.lightningEnabled && (
+    (QFC.fields.lightningOnHighlight && isHighlighted) ||
+    (QFC.fields.lightningOnBits && bits >= QFC.fields.lightningBitsThreshold)
+  )
+  scheduleReveal(msgId, shouldFlash)
+}
+
+function resolveCachedPronoun(username) {
+  const cached = QFC.pronounCache[username.toLowerCase()]
+  if (cached && cached.expiresAt > Date.now()) return QFC.pronounNames[cached.id] || null
+  getPronounAsync(username) // fire and forget; updates cache for next message
+  return null
+}
+
+async function getPronounAsync(username) {
+  const lower = username.toLowerCase()
+  const res = await fetchJson(`https://pronouns.alejo.io/api/users/${lower}`)
+  const entry = res && res[0]
+  if (entry) {
+    QFC.pronounCache[lower] = { id: entry.pronoun_id, expiresAt: Date.now() + 5 * 60 * 1000 }
+  }
+}
+
+async function loadPronounNames() {
+  const list = await fetchJson('https://pronouns.alejo.io/api/pronouns')
+  if (!list) return
+  for (const entry of list) QFC.pronounNames[entry.name] = entry.display
+}
+
+function randomPronoun() {
+  const keys = Object.values(QFC.pronounNames)
+  if (!keys.length) return null
+  return keys[randomInt(0, keys.length - 1)]
+}
+
+function formatPronoun(pronoun) {
+  if (!pronoun) return ''
+  return QFC.fields.pronounsLowercase ? pronoun.toLowerCase() : pronoun
+}
+
+function buildMessageHtml({ parsed, name, emoteSize, isAction, msgId, userId, badges, pronoun }) {
+  const badgeHtml = badges
+    .filter(b => b.url)
+    .map(b => `<img class="qfc-badge" src="${b.url}" alt="${htmlEscape(b.type || '')}">`)
+    .join('')
+
+  let pronounHtml = ''
+  if (pronoun && QFC.fields.pronounsMode === 'suffix') {
+    pronounHtml = `<span class="qfc-pronoun-suffix">${htmlEscape(formatPronoun(pronoun))}</span>`
+  } else if (pronoun && QFC.fields.pronounsMode === 'badge') {
+    pronounHtml = `<span class="qfc-pronoun-badge">${htmlEscape(formatPronoun(pronoun))}</span>`
+  }
+
+  const bodyHtml = parsed.map(part => {
+    if (part.type === 'text') return part.data
+    const sizeClass = QFC.fields.largeEmotes && emoteSize > 1 ? ` qfc-emote-${emoteSize}` : ''
+    return `<img class="qfc-emote${sizeClass}" src="${emoteUrl(part.data)}" alt="">`
+  }).join('')
+
+  return `
+    <div class="qfc-message" data-message-id="${msgId}" data-user-id="${userId}">
+      <div class="qfc-name-row">
+        ${badgeHtml}
+        <span class="qfc-name">${htmlEscape(name)}</span>
+        ${pronounHtml}
+      </div>
+      <div class="qfc-text${isAction ? ' qfc-action' : ''}">${bodyHtml}</div>
+    </div>
+  `
+}
+
+function htmlEscapeAlreadyEscaped(text) {
+  // text already passed through htmlEscape() before emote parsing split it up
+  return text
+}
+
+function scheduleReveal(msgId, shouldFlash) {
+  const el = document.querySelector(`.qfc-message[data-message-id="${msgId}"]`)
+  if (!el) return
+
+  setTimeout(() => {
+    el.classList.add('qfc-visible')
+    if (QFC.fields.animation !== 'none') el.classList.add(`qfc-anim-${QFC.fields.animation}`)
+    QFC.messageCount++
+    enforceMaxMessages()
+    if (shouldFlash) triggerLightning(el)
+    if (QFC.fields.lifetime > 0) {
+      setTimeout(() => removeMessage(msgId), QFC.fields.lifetime * 1000)
+    }
+  }, QFC.fields.delay * 1000)
+}
+
+function triggerLightning(el) {
+  const outset = 24
+
+  const wrap = document.createElement('div')
+  wrap.className = 'qfc-lightning-wrap'
+  wrap.innerHTML = `
+    <svg>
+      <rect class="qfc-line-1"></rect>
+      <rect class="qfc-line-2"></rect>
+    </svg>`
+  el.appendChild(wrap)
+
+  const svg = wrap.querySelector('svg')
+  const line1 = wrap.querySelector('.qfc-line-1')
+  const line2 = wrap.querySelector('.qfc-line-2')
+
+  function sync() {
+    const w = Math.round(el.offsetWidth)
+    const h = Math.round(el.offsetHeight)
+    const totalW = w + outset * 2
+    const totalH = h + outset * 2
+
+    wrap.style.top = `-${outset}px`
+    wrap.style.left = `-${outset}px`
+    wrap.style.width = `${totalW}px`
+    wrap.style.height = `${totalH}px`
+
+    svg.setAttribute('width', totalW)
+    svg.setAttribute('height', totalH)
+    svg.setAttribute('viewBox', `0 0 ${totalW} ${totalH}`)
+
+    line1.setAttribute('x', outset - 5)
+    line1.setAttribute('y', outset - 5)
+    line1.setAttribute('width', w + 10)
+    line1.setAttribute('height', h + 10)
+    line1.setAttribute('rx', 16)
+
+    line2.setAttribute('x', outset + 3)
+    line2.setAttribute('y', outset + 3)
+    line2.setAttribute('width', Math.max(w - 6, 0))
+    line2.setAttribute('height', Math.max(h - 6, 0))
+    line2.setAttribute('rx', 10)
+  }
+
+  sync()
+  const observer = new ResizeObserver(sync)
+  observer.observe(el)
+
+  requestAnimationFrame(() => wrap.classList.add('qfc-lightning-active'))
+  setTimeout(() => {
+    wrap.classList.remove('qfc-lightning-active')
+    setTimeout(() => {
+      observer.disconnect()
+      wrap.remove()
+    }, 400)
+  }, QFC.fields.lightningDuration * 1000)
+}
+
+function enforceMaxMessages() {
+  if (!QFC.fields.maxMessages || QFC.messageCount <= QFC.fields.maxMessages) return
+  const all = document.querySelectorAll('.qfc-message:not(.qfc-leaving)')
+  const oldest = all[all.length - 1]
+  if (oldest) fadeAndRemove(oldest)
+}
+
+function removeMessage(msgId) {
+  document.querySelectorAll(`.qfc-message[data-message-id="${msgId}"]`).forEach(fadeAndRemove)
+}
+
+function removeMessagesForUser(userId) {
+  if (!userId) {
+    document.querySelectorAll('.qfc-message').forEach(fadeAndRemove)
+    QFC.messageCount = 0
+    return
+  }
+  document.querySelectorAll(`.qfc-message[data-user-id="${userId}"]`).forEach(fadeAndRemove)
+}
+
+function fadeAndRemove(el) {
+  if (el.classList.contains('qfc-leaving')) return
+  QFC.messageCount--
+  el.classList.add('qfc-leaving')
+  setTimeout(() => el.remove(), 400)
+}
+
+function parseMessage(text, twitchEmotes) {
+  const combined = [...twitchEmotes]
+
+  for (const name of Object.keys(QFC.sevenTV)) {
+    let index = text.indexOf(name)
+    while (index !== -1) {
+      const before = text[index - 1]
+      const after = text[index + name.length]
+      if ((!before || /\s/.test(before)) && (!after || /\s/.test(after))) {
+        combined.push({ provider: 'sevenTV', name, start: index, end: index + name.length - 1 })
+      }
+      index = text.indexOf(name, index + 1)
+    }
+  }
+
+  const active = combined.filter(e =>
+    e.provider === 'sevenTV' || ['twitch', 'ffz', 'bttv', 'sticker'].includes(e.type)
+  )
+
+  if (active.length === 0) return [{ type: 'text', data: text }]
+
+  const escapedNames = active.map(e => e.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const regex = new RegExp(`(?<=\\s|^)(?:${escapedNames.sort((a, b) => b.length - a.length).join('|')})(?=\\s|$|[.,!])`, 'g')
+
+  const textChunks = text.split(regex)
+  const last = textChunks.pop()
+  const parts = []
+  textChunks.forEach((chunk, i) => {
+    parts.push({ type: 'text', data: chunk })
+    parts.push({ type: 'emote', data: active[i] })
+  })
+  parts.push({ type: 'text', data: last })
+  return parts
+}
+
+function emoteUrl(emote) {
+  if (emote.provider === 'sevenTV') return QFC.sevenTV[emote.name].urls[4]
+  if (emote.type === 'twitch') {
+    return `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/default/light/3.0`
+  }
+  return emote.urls?.[4] || emote.urls?.[2] || emote.urls?.[1]
+}
+
+function sizeForContent(parts) {
+  let emoteCount = 0
+  for (const part of parts) {
+    if (part.type === 'emote') emoteCount++
+    else if (part.data.trim() !== '') return 1
+  }
+  return emoteCount > 1 ? 2 : 4
+}
+
+const PREVIEW_NAMES = [
+  'Quantumtherobot', 'mocchipinku', 'coolviewer123', 'notabot', 'epicChatter', 'wintonOverwatch', 'my favorite viewer',
+]
+
+const PREVIEW_TEXTS = [
+  'HYPE',
+  'this is a very long message specifically designed to test if the chat doesnt break when someone sends a long message, if it doesnt this should look fine',
+  'gg well played',
+  'Hello chat',
+  'are we live?',
+  'Jarvis, clip that',
+  'this is chat is very cool whoever designed must be cool and handsome',
+  'NICE',
+  'i like this',
+  'what game is this',
+]
+
+function sendPreviewMessages(gap) {
+  const tick = () => {
+    if (!QFC.fields.previewMode) return
+    const name = PREVIEW_NAMES[randomInt(0, PREVIEW_NAMES.length - 1)]
+    const text = PREVIEW_TEXTS[randomInt(0, PREVIEW_TEXTS.length - 1)]
+    handleMessage({
+      data: {
+        userId: name, nick: name.toLowerCase(), displayName: name,
+        text, emotes: [], badges: [], tags: {},
+        msgId: `${name}_${Date.now()}`,
+      },
+    }, true)
+    setTimeout(tick, gap)
+  }
+  tick()
+}
+
+async function fetchJson(url) {
+  try {
+    const res = await fetch(url)
+    return res.ok ? await res.json() : null
+  } catch {
+    return null
+  }
+}
+
+function toList(str = '') {
+  return str.split(',').map(s => s.trim()).filter(Boolean)
+}
+
+function matchesUserList(list, ...names) {
+  const lower = names.map(n => (n || '').toLowerCase())
+  return list.some(u => lower.includes(u.toLowerCase()))
+}
+
+function startsWithIgnoredPrefix(text) {
+  return QFC.fields.ignorePrefixes.some(p => text.startsWith(p))
+}
+
+function isPermittedUserLevel(badges) {
+  if (QFC.fields.includeEveryone) return true
+  if (!badges.length) return false
+  const allowed = ['broadcaster']
+  if (QFC.fields.includeSubs) allowed.push('subscriber', 'founder')
+  if (QFC.fields.includeVIPs) allowed.push('vip')
+  if (QFC.fields.includeMods) allowed.push('moderator')
+  return badges.some(b => allowed.includes(b.type))
+}
+
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
+function toggleClass(name, condition) {
+  document.querySelector('main').classList.toggle(name, !!condition)
+}
+
+function htmlEscape(text) {
+  return text.replace(/[<>"'^=]/g, ch => `&#${ch.charCodeAt(0)};`)
+}
+
+</script>
+<script>
+// Fire onWidgetLoad the same way StreamElements does after the widget loads.
+window.dispatchEvent(new CustomEvent('onWidgetLoad', {
+  detail: {
+    fieldData: FIELD_DATA,
+    channel: { username: 'quantumtherobot', id: null, providerId: null, avatar: '' },
+    session: { data: {} },
+    recents: [],
+    currency: { code: 'USD', name: 'U.S. Dollar', symbol: '$' },
+    overlay: { isEditorMode: true, muted: false },
+    emulated: true,
+  },
+}));
+</script>
+</body>
+</html>
