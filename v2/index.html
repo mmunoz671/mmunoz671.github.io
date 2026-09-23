@@ -100,6 +100,8 @@ p{margin:0}
 .props fieldset{border:0;margin:0;padding:12px 12px 10px;box-shadow:inset 1px 1px var(--lo),inset -1px -1px var(--hi),inset 2px 2px var(--hi),inset -2px -2px var(--lo);font-size:14px;color:var(--ink-soft)}
 .props legend{font-family:var(--pixel);font-weight:400;font-size:19px;color:var(--ink);padding:0 4px;background:var(--face)}
 .body-text{max-width:74ch;color:var(--ink-soft);font-size:15px}
+.about .role+.role{margin-top:6px}
+.lede+.lede,.body-text+.body-text{margin-top:10px}
 
 /* Widgets */
 .brand{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
@@ -165,7 +167,8 @@ p{margin:0}
           <div>
             <p class="eyebrow">C:\Portafolio\Matias_Munoz&gt;</p>
             <h1>Matías Muñoz</h1>
-            <p class="role">Diseñador de Juegos Digitales y Licenciado en Diseño (Universidad Andrés Bello, aprobado con distinción). Creo miniaturas, video, overlays y widgets para streaming.</p>
+            <p class="role">Diseñador de Juegos Digitales y Licenciado en Diseño (Universidad Andrés Bello, aprobado con distinción).</p>
+            <p class="role">Creo miniaturas, video, overlays y widgets para streaming.</p>
           </div>
           <div class="fields">
             <div class="field"><label for="f-mail">Correo</label><output id="f-mail">matiasmunozn2244@gmail.com</output></div>
@@ -186,7 +189,8 @@ p{margin:0}
       <div class="titlebar"><span class="t" id="t-thumb">C:\Miniaturas — Explorador</span><span class="ctl" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span></div>
       <div class="content">
         <h2>Miniaturas</h2>
-        <p class="lede">Formato 16:9 pensado para leerse rápido en el feed. Personaje posado y renderizado en Blender; composición y retoque en Photoshop / Affinity Photo. En las piezas basadas en arte existente, pulsa “Ver referencia” para comparar.</p>
+        <p class="lede">Formato 16:9 pensado para leerse rápido en el feed. Personaje posado y renderizado en Blender; composición y retoque en Photoshop / Affinity Photo.</p>
+        <p class="lede">En las piezas basadas en arte existente, pulsa “Ver referencia” para comparar.</p>
         <div class="thumbs">
 <article class="thumb wide">
       <div class="sunken shot" id="th-disco"><img class="res" src="media/disco.jpg" alt="Miniatura: Dead as Disco" loading="lazy"><img class="ref" src="media/disco_ref.jpg" alt="Referencia: Arte oficial del juego" loading="lazy"><span class="stamp">RESULTADO</span></div>
@@ -233,7 +237,9 @@ p{margin:0}
       <div class="content">
         <h2>Organización del Campeonato VTuber (CVT)</h2>
         <p class="kind">Evento online · creadores de contenido</p>
-        <p class="body-text">Invité a creadores de contenido VTuber a participar, recopilé sus modelos 3D y los cargué en el juego de peleas VRAST. Coordiné a otros creadores como comentaristas y transmitimos los combates, disputados por la CPU con los personajes de cada participante, en formato “kayfabe”: todos sabían que eran combates automáticos, pero se narraban y vivían como si fueran reales, lo que convertía cada ronda en entretenimiento. También diseñé el formato de competencia, incluida una edición con doble eliminación, y produje las piezas de difusión.</p>
+        <p class="body-text">Invité a creadores de contenido VTuber a participar, recopilé sus modelos 3D y los cargué en el juego de peleas VRAST.</p>
+        <p class="body-text">Coordiné a otros creadores como comentaristas y transmitimos los combates, disputados por la CPU con los personajes de cada participante, en formato “kayfabe”: todos sabían que eran combates automáticos, pero se narraban y vivían como si fueran reales, lo que convertía cada ronda en entretenimiento.</p>
+        <p class="body-text">También diseñé el formato de competencia, incluida una edición con doble eliminación, y produje las piezas de difusión.</p>
         <div class="props">
           <fieldset><legend>Rol</legend>Idea, organización, producción y promoción</fieldset>
           <fieldset><legend>Coordinación</legend>Participantes y equipo de comentaristas</fieldset>
@@ -246,7 +252,8 @@ p{margin:0}
       <div class="titlebar"><span class="t" id="t-wid">QNTMOS Widgets — Panel de control</span><span class="ctl" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span></div>
       <div class="content">
         <div class="brand"><span class="logo">QNTMOS</span><h2>Widgets de chat para streaming</h2></div>
-        <p class="lede">Línea de overlays de chat que diseño y programo bajo mi marca QNTMOS para transmisiones en Twitch. Cada uno parte de una referencia visual reconocible y se vuelve una herramienta configurable para el streamer. Las vistas previas de abajo están funcionando en vivo con mensajes de prueba.</p>
+        <p class="lede">Línea de overlays de chat que diseño y programo bajo mi marca QNTMOS para transmisiones en Twitch. Cada uno parte de una referencia visual reconocible y se vuelve una herramienta configurable para el streamer.</p>
+        <p class="lede">Las vistas previas de abajo están funcionando en vivo con mensajes de prueba.</p>
         <div class="tabs" role="tablist" aria-label="Widgets"><button type="button" role="tab" class="tab" id="tab-w98" aria-selected="true" aria-controls="wpanel" data-w="w98">Windows 98</button><button type="button" role="tab" class="tab" id="tab-xp" aria-selected="false" aria-controls="wpanel" data-w="xp">Windows XP</button><button type="button" role="tab" class="tab" id="tab-msn" aria-selected="false" aria-controls="wpanel" data-w="msn">MSN Messenger</button><button type="button" role="tab" class="tab" id="tab-term" aria-selected="false" aria-controls="wpanel" data-w="term">Terminal CRT</button><button type="button" role="tab" class="tab" id="tab-fantasy" aria-selected="false" aria-controls="wpanel" data-w="fantasy">Fantasía / taberna</button><button type="button" role="tab" class="tab" id="tab-postit" aria-selected="false" aria-controls="wpanel" data-w="postit">Notas adhesivas</button><button type="button" role="tab" class="tab" id="tab-rpg" aria-selected="false" aria-controls="wpanel" data-w="rpg">Diálogo RPG</button></div>
         <div class="tabpanel" id="wpanel" role="tabpanel">
           <div class="sunken stage" id="stage"><div class="bg" style="background-image:url('media/trailer-cvt-poster.jpg')"></div><iframe id="wframe" title="Vista previa del widget" loading="lazy" scrolling="no"></iframe><span class="live">EN VIVO</span></div>
