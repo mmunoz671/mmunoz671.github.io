@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>QntmOs Portafolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Figtree:wght@400;500;600&family=VT323&display=swap">
+<style>
+/* Single-look design: the QntmOs desktop is always dark, windows are always light */
+:root{
+  color-scheme:dark;
+  --desk:#13141A; --desk-dot:#23263A;
+  --blue:#2B68CF; --cyan:#35E2E5; --lav:#A7BBFF; --purple:#541DA2;
+  --face:#DCE1F5; --face-2:#EEF1FB; --ink:#13141A; --ink-soft:#3E4260;
+  --hi:#FFFFFF; --lo:#6B71A3; --dark:#0A0B10;
+  --pixel:"Pixelify Sans","Courier New",monospace;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --term:"VT323","Courier New",monospace;
+  --taskbar-h:46px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:16px}
+body{background:var(--desk);background-image:radial-gradient(var(--desk-dot) 1px,transparent 1px);background-size:18px 18px;color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.55;padding:0 16px;padding-bottom:calc(var(--taskbar-h) + env(safe-area-inset-bottom,0px) + 24px)}
+.desk{max-width:1180px;margin:0 auto;padding-block:28px 12px;display:grid;grid-template-columns:96px minmax(0,1fr);gap:24px;align-items:start}
+
+/* Desktop icons */
+.icons{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);display:flex;flex-direction:column;gap:18px}
+.icon{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:#fff;font-family:var(--pixel);font-size:13px;text-align:center;padding:6px 4px;border:1px dotted transparent}
+.icon svg{width:40px;height:40px;image-rendering:pixelated}
+.icon:hover span,.icon:focus-visible span{background:var(--blue);outline:1px dotted #fff}
+.icon:focus-visible{outline:none}
+.icon span{padding:1px 4px;text-shadow:1px 1px 0 var(--dark)}
+
+.stack{display:flex;flex-direction:column;gap:28px;min-width:0}
+
+/* Win9x window */
+.win{background:var(--face);box-shadow:inset -1px -1px var(--dark),inset 1px 1px var(--face-2),inset -2px -2px var(--lo),inset 2px 2px var(--hi),6px 6px 0 rgba(0,0,0,.45);padding:3px}
+.titlebar{display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,var(--purple),var(--blue) 45%,var(--cyan));color:#fff;padding:4px 4px 4px 8px;font-family:var(--pixel);font-weight:600;font-size:15px;letter-spacing:.02em;text-shadow:1px 1px 0 rgba(0,0,0,.35)}
+.titlebar .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.titlebar .ctl{display:flex;gap:2px}
+.titlebar .ctl i{width:18px;height:16px;background:var(--face);box-shadow:inset -1px -1px var(--dark),inset 1px 1px var(--hi),inset -2px -2px var(--lo);display:grid;place-items:center;font-style:normal;color:var(--ink);font-size:11px;line-height:1;text-shadow:none;font-family:var(--body);font-weight:700}
+.menubar{display:flex;gap:16px;padding:4px 8px;font-size:13px;color:var(--ink-soft);border-bottom:1px solid var(--lo)}
+.menubar u{text-decoration-thickness:1px}
+.content{padding:22px 22px 24px}
+.status{display:flex;gap:4px;padding:2px;font-family:var(--term);font-size:17px;color:var(--ink-soft)}
+.status span{flex:1;padding:0 8px;box-shadow:inset 1px 1px var(--lo),inset -1px -1px var(--hi)}
+.status span:last-child{flex:0 0 auto}
+.sunken{box-shadow:inset 1px 1px var(--lo),inset -1px -1px var(--hi),inset 2px 2px var(--dark),inset -2px -2px var(--face-2);background:var(--dark);padding:2px}
+
+h1,h2,h3{font-family:var(--pixel);font-weight:700;margin:0;text-wrap:balance}
+h1{font-size:clamp(38px,6.4vw,68px);line-height:.95;letter-spacing:-.01em;color:var(--ink)}
+h2{font-size:22px}
+h3{font-size:19px;line-height:1.15}
+p{margin:0}
+.kind{font-family:var(--term);font-size:18px;color:var(--purple);line-height:1.1;margin:2px 0 8px}
+.lede{color:var(--ink-soft);max-width:60ch}
+
+/* About */
+.about{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:28px;align-items:end}
+.about .role{font-size:18px;color:var(--ink-soft);margin-top:14px;max-width:48ch}
+.eyebrow{font-family:var(--term);font-size:20px;color:var(--blue);margin-bottom:10px}
+.fields{display:grid;gap:8px}
+.field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:2px}
+.field output{display:block;background:#fff;color:var(--ink);padding:5px 8px;font-size:14px;user-select:all;box-shadow:inset 1px 1px var(--lo),inset -1px -1px var(--hi),inset 2px 2px var(--dark)}
+.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:24px;padding-top:18px;border-top:1px solid var(--lo)}
+.summary b{display:block;font-family:var(--term);font-weight:400;font-size:18px;color:var(--purple);line-height:1}
+.summary div{font-size:14px;color:var(--ink-soft)}
+
+/* Buttons & chips */
+.btn98{font:600 13px var(--body);color:var(--ink);background:var(--face);border:0;padding:6px 14px;cursor:pointer;box-shadow:inset -1px -1px var(--dark),inset 1px 1px var(--hi),inset -2px -2px var(--lo),inset 2px 2px var(--face-2)}
+.btn98:active,.btn98[aria-pressed="true"]{box-shadow:inset 1px 1px var(--dark),inset -1px -1px var(--hi),inset 2px 2px var(--lo);padding:7px 13px 5px 15px}
+.btn98:focus-visible{outline:1px dotted var(--ink);outline-offset:-5px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:12px 0 0;padding:0}
+.chips li{font-size:12px;font-weight:600;color:var(--purple);background:var(--face-2);border:1px solid var(--lav);padding:2px 8px}
+
+/* Thumbnails */
+.thumbs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px;margin-top:22px}
+.thumb{display:flex;flex-direction:column;gap:12px;min-width:0}
+.thumb.wide{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:22px;align-items:start}
+.shot{position:relative;aspect-ratio:16/9;max-width:100%}
+.shot img{position:absolute;inset:2px;width:calc(100% - 4px);height:calc(100% - 4px);object-fit:contain;background:var(--dark);transition:opacity .2s}
+.shot img.ref{opacity:0}
+.shot.showref img.ref{opacity:1}
+.shot.showref img.res{opacity:0}
+.stamp{position:absolute;left:8px;bottom:8px;font-family:var(--term);font-size:16px;line-height:1;color:#fff;background:var(--purple);padding:3px 6px}
+.shot.showref .stamp{background:var(--blue)}
+.thumb-body p:not(.kind){font-size:14.5px;color:var(--ink-soft)}
+.refrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.refnote{font-size:12.5px;color:var(--ink-soft);font-style:italic}
+
+/* Video + tournament */
+.media{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:24px;align-items:start}
+.player{aspect-ratio:16/9;max-width:100%}
+.player video{width:100%;height:100%;display:block;background:#000}
+.media .body p{font-size:14.5px;color:var(--ink-soft);margin-bottom:10px}
+.note{font-size:12.5px !important;font-style:italic}
+.props{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}
+.props fieldset{border:0;margin:0;padding:12px 12px 10px;box-shadow:inset 1px 1px var(--lo),inset -1px -1px var(--hi),inset 2px 2px var(--hi),inset -2px -2px var(--lo);font-size:14px;color:var(--ink-soft)}
+.props legend{font-family:var(--pixel);font-weight:600;font-size:14px;color:var(--ink);padding:0 4px}
+.body-text{max-width:74ch;color:var(--ink-soft);font-size:15px}
+
+/* Widgets */
+.brand{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.logo{font-family:var(--pixel);font-weight:700;font-size:26px;letter-spacing:.06em;color:#fff;background:linear-gradient(90deg,var(--purple),var(--blue));padding:4px 12px;box-shadow:3px 3px 0 var(--cyan)}
+.tabs{display:flex;flex-wrap:wrap;gap:2px;margin-top:18px;padding-left:4px}
+.tab{font:600 13px var(--body);color:var(--ink);background:var(--face);border:0;padding:6px 12px 5px;cursor:pointer;box-shadow:inset 1px 1px var(--hi),inset -1px 0 var(--dark),inset -2px 0 var(--lo);position:relative;top:2px}
+.tab[aria-selected="true"]{background:var(--face-2);top:0;padding-bottom:7px;z-index:1}
+.tab:focus-visible{outline:1px dotted var(--ink);outline-offset:-4px}
+.tabpanel{background:var(--face-2);box-shadow:inset 1px 1px var(--hi),inset -1px -1px var(--dark),inset -2px -2px var(--lo);padding:16px;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px;align-items:start}
+.stage{position:relative;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:#2a2d3f}
+.stage .bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(2px) brightness(.55) saturate(.9);transform:scale(1.04)}
+.stage iframe{position:absolute;left:0;top:0;width:800px;height:450px;border:0;transform-origin:0 0;background:transparent}
+.stage .live{position:absolute;right:8px;top:8px;font-family:var(--term);font-size:16px;line-height:1;background:#D7263D;color:#fff;padding:3px 6px;z-index:2}
+.winfo h3{margin-bottom:6px}
+.winfo p{font-size:14.5px;color:var(--ink-soft)}
+.feat{margin:12px 0 0;padding:8px 10px 8px 26px;background:#fff;box-shadow:inset 1px 1px var(--lo),inset -1px -1px var(--hi),inset 2px 2px var(--dark);font-size:13.5px}
+.feat li{margin:2px 0}
+.common{margin-top:14px;font-size:13px;color:var(--ink-soft);border-top:1px solid var(--lav);padding-top:10px}
+
+/* Taskbar */
+.taskbar{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--face);box-shadow:inset 0 1px var(--hi),inset 0 2px var(--face-2),0 -1px var(--dark);padding:4px 6px calc(4px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:6px}
+.start{display:flex;align-items:center;gap:6px;font-family:var(--pixel);font-weight:700;font-size:15px;padding:4px 10px;text-decoration:none}
+.start b{display:inline-block;width:16px;height:16px;background:conic-gradient(var(--cyan) 0 25%,var(--blue) 0 50%,var(--purple) 0 75%,var(--lav) 0)}
+.tasks{display:flex;gap:4px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+.tasks::-webkit-scrollbar{display:none}
+.task{flex:0 0 auto;font:500 13px var(--body);color:var(--ink);text-decoration:none;padding:5px 10px;background:var(--face);box-shadow:inset -1px -1px var(--dark),inset 1px 1px var(--hi),inset -2px -2px var(--lo)}
+.task:focus-visible{outline:1px dotted var(--ink);outline-offset:-4px}
+.tray{font-family:var(--term);font-size:18px;padding:3px 10px;box-shadow:inset 1px 1px var(--lo),inset -1px -1px var(--hi);white-space:nowrap}
+
+@media (max-width:900px){
+  .desk{grid-template-columns:1fr}
+  .icons{position:static;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:2px;scrollbar-width:none}
+  .icons::-webkit-scrollbar{display:none}
+  .icon{flex:0 0 76px;font-size:11px}
+  .icon svg{width:32px;height:32px}
+  .about,.thumb.wide,.media,.tabpanel{grid-template-columns:1fr}
+  .summary,.props{grid-template-columns:1fr}
+  .thumbs{grid-template-columns:1fr}
+  .content{padding:16px}
+  .tray{display:none}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.shot img{transition:none}}
+</style>
+</head>
+<body>
+
+
+<div class="desk">
+  <nav class="icons" aria-label="Secciones">
+    <a class="icon" href="#sobre-mi"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="1" width="12" height="14" fill="#fff"/><rect x="2" y="1" width="12" height="14" fill="none" stroke="#13141A"/><rect x="4" y="4" width="8" height="1" fill="#2B68CF"/><rect x="4" y="7" width="8" height="1" fill="#6B71A3"/><rect x="4" y="9" width="6" height="1" fill="#6B71A3"/><rect x="4" y="11" width="7" height="1" fill="#6B71A3"/></svg><span>sobre_mi.txt</span></a>
+    <a class="icon" href="#miniaturas"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3" width="14" height="10" fill="#35E2E5" stroke="#13141A"/><rect x="2" y="9" width="12" height="3" fill="#541DA2"/><rect x="9" y="4" width="3" height="3" fill="#fff"/><polygon points="2,12 6,6 10,12" fill="#2B68CF"/></svg><span>Miniaturas</span></a>
+    <a class="icon" href="#trailer"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3" width="14" height="10" fill="#13141A" stroke="#A7BBFF"/><polygon points="6,5 11,8 6,11" fill="#35E2E5"/></svg><span>Trailer</span></a>
+    <a class="icon" href="#torneo"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="2" width="8" height="6" fill="#F2C94C" stroke="#13141A"/><rect x="7" y="8" width="2" height="3" fill="#F2C94C"/><rect x="4" y="11" width="8" height="3" fill="#541DA2" stroke="#13141A"/><rect x="2" y="3" width="2" height="3" fill="none" stroke="#F2C94C"/><rect x="12" y="3" width="2" height="3" fill="none" stroke="#F2C94C"/></svg><span>Torneo CVT</span></a>
+    <a class="icon" href="#widgets"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="2" width="11" height="8" fill="#DCE1F5" stroke="#13141A"/><rect x="1" y="2" width="11" height="2" fill="#2B68CF"/><rect x="4" y="6" width="11" height="8" fill="#DCE1F5" stroke="#13141A"/><rect x="4" y="6" width="11" height="2" fill="#35E2E5"/><rect x="6" y="10" width="6" height="1" fill="#541DA2"/></svg><span>Widgets</span></a>
+  </nav>
+
+  <main class="stack">
+    <section class="win" id="sobre-mi" aria-labelledby="t-about">
+      <div class="titlebar"><span class="t" id="t-about">sobre_mi.txt — Bloc de notas</span><span class="ctl" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span></div>
+      <div class="menubar" aria-hidden="true"><span><u>A</u>rchivo</span><span><u>E</u>dición</span><span><u>V</u>er</span><span>Ay<u>u</u>da</span></div>
+      <div class="content">
+        <div class="about">
+          <div>
+            <p class="eyebrow">C:\Portafolio\Matias_Munoz&gt;</p>
+            <h1>Matías Muñoz</h1>
+            <p class="role">Diseñador de Juegos Digitales y Licenciado en Diseño (Universidad Andrés Bello, aprobado con distinción). Creo miniaturas, video, overlays y widgets para streaming.</p>
+          </div>
+          <div class="fields">
+            <div class="field"><label for="f-mail">Correo</label><output id="f-mail">matiasmunozn2244@gmail.com</output></div>
+            <div class="field"><label for="f-tel">Teléfono / WhatsApp</label><output id="f-tel">+56 9 5659 1347</output></div>
+            <div class="field"><label for="f-loc">Ubicación</label><output id="f-loc">Santiago, Chile</output></div>
+          </div>
+        </div>
+        <div class="summary">
+          <div><b>Diseño gráfico</b>Miniaturas y piezas para videos y transmisiones.</div>
+          <div><b>Video y eventos</b>Edición de trailers y producción de un torneo online.</div>
+          <div><b>Widgets QNTMOS</b>Overlays de chat en HTML, CSS y JavaScript.</div>
+        </div>
+      </div>
+      <div class="status" aria-hidden="true"><span>Blender · Photoshop · Affinity Photo · Premiere Pro · DaVinci Resolve · HTML/CSS/JS</span><span>Ln 1, Col 1</span></div>
+    </section>
+
+    <section class="win" id="miniaturas" aria-labelledby="t-thumb">
+      <div class="titlebar"><span class="t" id="t-thumb">C:\Miniaturas — Explorador</span><span class="ctl" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span></div>
+      <div class="content">
+        <h2>Miniaturas</h2>
+        <p class="lede">Formato 16:9 pensado para leerse rápido en el feed. Personaje posado y renderizado en Blender; composición y retoque en Photoshop / Affinity Photo. En las piezas basadas en arte existente, pulsa “Ver referencia” para comparar.</p>
+        <div class="thumbs">
+<article class="thumb wide">
+      <div class="sunken shot" id="th-disco"><img class="res" src="media/disco.jpg" alt="Miniatura: Dead as Disco" loading="lazy"><img class="ref" src="media/disco_ref.jpg" alt="Referencia: Arte oficial del juego" loading="lazy"><span class="stamp">RESULTADO</span></div>
+      <div class="thumb-body"><h3>Dead as Disco</h3><p class="kind">Miniatura · video de juego</p><p>Reinterpreté el arte oficial: reemplacé la calavera por mi personaje 3D, llevé el banner a 16:9 y reubiqué lentes y título manteniendo la paleta y el trama de puntos del original.</p><ul class="chips"><li>Blender</li><li>Photoshop / Affinity</li></ul><div class="refrow"><button type="button" class="btn98 refbtn" aria-pressed="false" data-target="th-disco">Ver referencia</button><span class="refnote">Arte oficial del juego</span></div></div>
+    </article>
+<article class="thumb">
+      <div class="sunken shot" id="th-delta"><img class="res" src="media/delta.jpg" alt="Miniatura: Teorías de Deltarune" loading="lazy"><img class="ref" src="media/delta_ref.jpg" alt="Referencia: Meme usado como inspiración" loading="lazy"><span class="stamp">RESULTADO</span></div>
+      <div class="thumb-body"><h3>Teorías de Deltarune</h3><p class="kind">Miniatura · video de análisis</p><p>Adapté el meme del “tablero de conspiración” al universo del juego: corcho, hilo rojo, tipografía pixelada y un llamado de atención que guía la mirada.</p><ul class="chips"><li>Blender</li><li>Photoshop / Affinity</li><li>Concepto</li></ul><div class="refrow"><button type="button" class="btn98 refbtn" aria-pressed="false" data-target="th-delta">Ver referencia</button><span class="refnote">Meme usado como inspiración</span></div></div>
+    </article>
+<article class="thumb">
+      <div class="sunken shot" id="th-mario"><img class="res" src="media/mario.jpg" alt="Miniatura: Super Mario Bros. Wonder" loading="lazy"><img class="ref" src="media/mario_ref.jpg" alt="Referencia: Key art oficial" loading="lazy"><span class="stamp">RESULTADO</span></div>
+      <div class="thumb-body"><h3>Super Mario Bros. Wonder</h3><p class="kind">Miniatura · transmisión en colaboración</p><p>Integración de personajes en el key art oficial respetando iluminación, contorno y estilo, y limpieza de la composición quitando el sello de premio.</p><ul class="chips"><li>Photoshop / Affinity</li><li>Integración</li></ul><div class="refrow"><button type="button" class="btn98 refbtn" aria-pressed="false" data-target="th-mario">Ver referencia</button><span class="refnote">Key art oficial</span></div></div>
+    </article>
+<article class="thumb">
+      <div class="sunken shot" id="th-fav"><img class="res" src="media/fav.jpg" alt="Miniatura: Mi juego favorito de cada año" loading="lazy"><span class="stamp">RESULTADO</span></div>
+      <div class="thumb-body"><h3>Mi juego favorito de cada año</h3><p class="kind">Miniatura · video de ranking</p><p>Composición simple y legible: personaje al centro, dos portadas como pistas y años en los extremos que explican el formato sin leer el título.</p><ul class="chips"><li>Blender</li><li>Photoshop / Affinity</li></ul><div class="refrow"><span class="refnote">Composición original</span></div></div>
+    </article>
+<article class="thumb">
+      <div class="sunken shot" id="th-letier"><img class="res" src="media/letier.jpg" alt="Miniatura: El Corazón de Mi´letier" loading="lazy"><span class="stamp">RESULTADO</span></div>
+      <div class="thumb-body"><h3>El Corazón de Mi´letier</h3><p class="kind">Anuncio · transmisión en grupo</p><p>Anuncio de transmisión colaborativa con la estética dorada del juego, horario destacado y una composición grupal que equilibra estilos distintos.</p><ul class="chips"><li>Blender</li><li>Photoshop / Affinity</li><li>Tipografía</li></ul><div class="refrow"><span class="refnote">Composición original</span></div></div>
+    </article>
+        </div>
+      </div>
+      <div class="status" aria-hidden="true"><span>5 objetos</span><span>1280 × 720</span></div>
+    </section>
+
+    <section class="win" id="trailer" aria-labelledby="t-vid">
+      <div class="titlebar"><span class="t" id="t-vid">trailer_cvt.mp4 — Reproductor</span><span class="ctl" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span></div>
+      <div class="content media">
+        <div class="sunken player"><video controls preload="metadata" playsinline poster="media/trailer-cvt-poster.jpg" aria-label="Trailer del Campeonato VTuber"><source src="media/trailer-cvt.mp4" type="video/mp4"></video></div>
+        <div class="body">
+          <h3>Trailer de anuncio · Campeonato VTuber</h3>
+          <p class="kind">Video promocional · 0:43 · 60 fps</p>
+          <p>Trailer para anunciar el regreso del torneo y abrir inscripciones: textos sobre negro que generan expectativa, combates y primeros planos de los participantes, y cierre con logo, fecha y llamado a inscribirse.</p>
+          <p>Grabé el gameplay, revisé los VODs de ediciones anteriores para elegir las mejores tomas e hice toda la edición y los títulos.</p>
+          <ul class="chips"><li>Premiere Pro</li><li>DaVinci Resolve</li><li>Grabación de gameplay</li><li>Títulos</li></ul>
+          <p class="note" style="margin-top:12px">Música: pista de un videojuego de pelea, no es de mi autoría.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="win" id="torneo" aria-labelledby="t-cvt">
+      <div class="titlebar"><span class="t" id="t-cvt">torneo_cvt.txt — Propiedades</span><span class="ctl" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span></div>
+      <div class="content">
+        <h2>Organización del Campeonato VTuber (CVT)</h2>
+        <p class="kind">Evento online · creadores de contenido</p>
+        <p class="body-text">Invité a creadores de contenido VTuber a participar, recopilé sus modelos 3D y los cargué en el juego de peleas VRAST. Coordiné a otros creadores como comentaristas y transmitimos los combates, disputados por la CPU con los personajes de cada participante, en formato “kayfabe”: todos sabían que eran combates automáticos, pero se narraban y vivían como si fueran reales, lo que convertía cada ronda en entretenimiento. También diseñé el formato de competencia, incluida una edición con doble eliminación, y produje las piezas de difusión.</p>
+        <div class="props">
+          <fieldset><legend>Rol</legend>Idea, organización, producción y promoción</fieldset>
+          <fieldset><legend>Coordinación</legend>Participantes y equipo de comentaristas</fieldset>
+          <fieldset><legend>Entregables</legend>Trailers, anuncios y transmisiones del evento</fieldset>
+        </div>
+      </div>
+    </section>
+
+    <section class="win" id="widgets" aria-labelledby="t-wid">
+      <div class="titlebar"><span class="t" id="t-wid">QNTMOS Widgets — Panel de control</span><span class="ctl" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span></div>
+      <div class="content">
+        <div class="brand"><span class="logo">QNTMOS</span><h2>Widgets de chat para streaming</h2></div>
+        <p class="lede">Línea de overlays de chat que diseño y programo bajo mi marca QNTMOS para transmisiones en Twitch. Cada uno parte de una referencia visual reconocible y se vuelve una herramienta configurable para el streamer. Las vistas previas de abajo están funcionando en vivo con mensajes de prueba.</p>
+        <div class="tabs" role="tablist" aria-label="Widgets"><button type="button" role="tab" class="tab" id="tab-w98" aria-selected="true" aria-controls="wpanel" data-w="w98">Windows 98</button><button type="button" role="tab" class="tab" id="tab-xp" aria-selected="false" aria-controls="wpanel" data-w="xp">Windows XP</button><button type="button" role="tab" class="tab" id="tab-msn" aria-selected="false" aria-controls="wpanel" data-w="msn">MSN Messenger</button><button type="button" role="tab" class="tab" id="tab-term" aria-selected="false" aria-controls="wpanel" data-w="term">Terminal CRT</button><button type="button" role="tab" class="tab" id="tab-fantasy" aria-selected="false" aria-controls="wpanel" data-w="fantasy">Fantasía / taberna</button><button type="button" role="tab" class="tab" id="tab-postit" aria-selected="false" aria-controls="wpanel" data-w="postit">Notas adhesivas</button><button type="button" role="tab" class="tab" id="tab-rpg" aria-selected="false" aria-controls="wpanel" data-w="rpg">Diálogo RPG</button></div>
+        <div class="tabpanel" id="wpanel" role="tabpanel">
+          <div class="sunken stage" id="stage"><div class="bg" style="background-image:url('media/trailer-cvt-poster.jpg')"></div><iframe id="wframe" title="Vista previa del widget" loading="lazy" scrolling="no"></iframe><span class="live">EN VIVO</span></div>
+          <div>
+<div class="winfo" data-w="w98"><h3>QNTMOS Window Chat</h3><p>Cada mensaje aparece como una ventana de Windows 98: barra de título con el nombre de quien escribe, botones de ventana, bordes biselados y la clásica fuente pixelada.</p><ul class="feat"><li>6 paletas + colores personalizados</li><li>Lista, aleatorio o por bordes</li><li>Mensajes destacados y /me</li><li>Fuente embebida en base64</li></ul></div>
+<div class="winfo" data-w="xp" hidden><h3>QNTMOS XP Chat</h3><p>Versión hermana en estilo Windows XP “Luna”: barra de título brillante y redondeada, botón de cierre rojo, sombra suave y panel blanco para el mensaje.</p><ul class="feat"><li>6 paletas (Azul, Oliva, Plata, Royale, Sunset, QNTMOS)</li><li>Lista, aleatorio o por bordes</li><li>Tamaño y ancho configurables</li><li>Fuente embebida en base64</li></ul></div>
+<div class="winfo" data-w="msn" hidden><h3>QNTMOS Messenger Chat</h3><p>Tarjetas con degradado al estilo MSN Messenger, con la foto de perfil de Twitch en el marco clásico y un sonido opcional de mensaje nuevo.</p><ul class="feat"><li>Color del marco por rol, color de nombre o estado</li><li>Foto de perfil de Twitch con respaldo</li><li>6 paletas + degradado personalizado</li><li>Sonido de mensaje nuevo</li></ul></div>
+<div class="winfo" data-w="term" hidden><h3>QNTMOS Terminal Chat</h3><p>Cada mensaje se escribe como un comando en una pantalla de fósforo con líneas de barrido, parpadeo y curvatura. También funciona como caja de alertas estilo terminal.</p><ul class="feat"><li>6 colores de fósforo</li><li>Efectos CRT activables uno a uno</li><li>Efecto máquina de escribir</li><li>Alertas de follows, subs, bits y raids</li></ul></div>
+<div class="winfo" data-w="fantasy" hidden><h3>QNTMOS Fantasy Chat</h3><p>Tarjetas oscuras con borde dorado y nombres en versalitas, con un efecto de relámpago que cae sobre los mensajes destacados o con bits.</p><ul class="feat"><li>7 paletas temáticas</li><li>Relámpago por puntos de canal o bits</li><li>Animaciones de entrada</li><li>Tipografía Cinzel + Lato</li></ul></div>
+<div class="winfo" data-w="postit" hidden><h3>QNTMOS Post-it Chat</h3><p>Los mensajes se convierten en notas adhesivas levemente giradas, escritas con plumón, con un alfiler del color del nombre del usuario y una animación de caída al desaparecer.</p><ul class="feat"><li>Color único o aleatorio por nota</li><li>6 paletas + personalizada</li><li>Rotación aleatoria configurable</li><li>Animación de caída al salir</li></ul></div>
+<div class="winfo" data-w="rpg" hidden><h3>RPG Textbox Chat</h3><p>Convierte el chat en cajas de diálogo de RPG clásico: el retrato es la foto de Twitch de quien escribe y el texto aparece letra por letra, con sonido opcional.</p><ul class="feat"><li>Modo caja única (cola) o lista</li><li>Máquina de escribir con sonido</li><li>Retrato con animación al hablar</li><li>6 paletas + personalizada</li></ul></div>
+            <p class="common">Todos: HTML, CSS y JavaScript para StreamElements; emotes de Twitch, 7TV, BTTV y FFZ; insignias; pronombres; filtros de usuarios y bots; modo de vista previa.</p>
+          </div>
+        </div>
+      </div>
+      <div class="status" aria-hidden="true"><span>7 widgets · StreamElements</span><span>QNTMOS</span></div>
+    </section>
+  </main>
+</div>
+
+<footer class="taskbar">
+  <a class="btn98 start" href="#sobre-mi"><b aria-hidden="true"></b>Inicio</a>
+  <nav class="tasks" aria-label="Ventanas">
+    <a class="task" href="#sobre-mi">sobre_mi.txt</a>
+    <a class="task" href="#miniaturas">Miniaturas</a>
+    <a class="task" href="#trailer">trailer_cvt.mp4</a>
+    <a class="task" href="#torneo">torneo_cvt.txt</a>
+    <a class="task" href="#widgets">QNTMOS Widgets</a>
+  </nav>
+  <span class="tray" id="clock" aria-hidden="true">--:--</span>
+</footer>
+
+<script>
+(function(){
+  // Reference toggles: swap the large image between result and original
+  document.querySelectorAll('.refbtn').forEach(function(b){
+    b.addEventListener('click',function(){
+      var s=document.getElementById(b.dataset.target), on=b.getAttribute('aria-pressed')!=='true';
+      b.setAttribute('aria-pressed',on);s.classList.toggle('showref',on);
+      s.querySelector('.stamp').textContent=on?'REFERENCIA':'RESULTADO';
+      b.textContent=on?'Ver resultado':'Ver referencia';
+    });
+  });
+
+  // Widget previews: decode each standalone preview and load it into the stage iframe
+  var W={"w98": "widgets/w98.html", "xp": "widgets/xp.html", "msn": "widgets/msn.html", "term": "widgets/term.html", "fantasy": "widgets/fantasy.html", "postit": "widgets/postit.html", "rpg": "widgets/rpg.html"}, frame=document.getElementById('wframe'), stage=document.getElementById('stage');
+  function decode(b64){var bin=atob(b64),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new TextDecoder('utf-8').decode(u);}
+  function fit(){var s=stage.clientWidth/800;frame.style.transform='scale('+s+')';}
+  function show(k){
+    document.querySelectorAll('.tab').forEach(function(t){t.setAttribute('aria-selected',t.dataset.w===k);t.tabIndex=t.dataset.w===k?0:-1;});
+    document.querySelectorAll('.winfo').forEach(function(p){p.hidden=p.dataset.w!==k;});
+    if(/\.html$/.test(W[k])){frame.removeAttribute('srcdoc');frame.src=W[k];}else{frame.srcdoc=decode(W[k]).replace('</head>','<style>html,body{background:transparent!important}</style></head>');}
+  }
+  var tabs=[].slice.call(document.querySelectorAll('.tab'));
+  tabs.forEach(function(t,i){
+    t.addEventListener('click',function(){show(t.dataset.w);});
+    t.addEventListener('keydown',function(e){
+      var d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0; if(!d)return;
+      var n=tabs[(i+d+tabs.length)%tabs.length]; n.focus(); show(n.dataset.w);
+    });
+  });
+  if('ResizeObserver' in window){new ResizeObserver(fit).observe(stage);}else{window.addEventListener('resize',fit);}
+  fit();
+  // Load the first widget once the section is near the viewport
+  var loaded=false;
+  function first(){if(!loaded){loaded=true;show(tabs[0].dataset.w);}}
+  if('IntersectionObserver' in window){new IntersectionObserver(function(es,o){if(es[0].isIntersecting){first();o.disconnect();}},{rootMargin:'400px'}).observe(stage);}else{first();}
+
+  // Taskbar clock
+  var c=document.getElementById('clock');
+  function tick(){var d=new Date();c.textContent=d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});}
+  tick();setInterval(tick,15000);
+})();
+</script>
+
+</body>
+</html>
