@@ -96,6 +96,10 @@ p{margin:0}
 .player video{width:100%;height:100%;display:block;background:#000}
 .media .body p{font-size:14.5px;color:var(--ink-soft);margin-bottom:10px}
 .note{font-size:12.5px !important;font-style:italic}
+.clips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:16px}
+.clip{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:16px;align-items:start}
+.player.vert{aspect-ratio:9/16}
+.clip .body p{font-size:14.5px;color:var(--ink-soft);margin-bottom:10px}
 .props{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}
 .props fieldset{border:0;margin:0;padding:12px 12px 10px;box-shadow:inset 1px 1px var(--lo),inset -1px -1px var(--hi),inset 2px 2px var(--hi),inset -2px -2px var(--lo);font-size:14px;color:var(--ink-soft)}
 .props legend{font-family:var(--pixel);font-weight:400;font-size:19px;color:var(--ink);padding:0 4px;background:var(--face)}
@@ -137,7 +141,7 @@ p{margin:0}
   .icons::-webkit-scrollbar{display:none}
   .icon{flex:0 0 76px;font-size:11px}
   .icon svg{width:32px;height:32px}
-  .about,.thumb.wide,.media,.tabpanel{grid-template-columns:1fr}
+  .about,.thumb.wide,.media,.tabpanel,.clips{grid-template-columns:1fr}
   .summary,.props{grid-template-columns:1fr}
   .thumbs{grid-template-columns:1fr}
   .content{padding:16px}
@@ -154,6 +158,7 @@ p{margin:0}
     <a class="icon" href="#sobre-mi"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="1" width="12" height="14" fill="#fff"/><rect x="2" y="1" width="12" height="14" fill="none" stroke="#13141A"/><rect x="4" y="4" width="8" height="1" fill="#2B68CF"/><rect x="4" y="7" width="8" height="1" fill="#6B71A3"/><rect x="4" y="9" width="6" height="1" fill="#6B71A3"/><rect x="4" y="11" width="7" height="1" fill="#6B71A3"/></svg><span>sobre_mi.txt</span></a>
     <a class="icon" href="#miniaturas"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3" width="14" height="10" fill="#35E2E5" stroke="#13141A"/><rect x="2" y="9" width="12" height="3" fill="#541DA2"/><rect x="9" y="4" width="3" height="3" fill="#fff"/><polygon points="2,12 6,6 10,12" fill="#2B68CF"/></svg><span>Miniaturas</span></a>
     <a class="icon" href="#trailer"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3" width="14" height="10" fill="#13141A" stroke="#A7BBFF"/><polygon points="6,5 11,8 6,11" fill="#35E2E5"/></svg><span>Trailer</span></a>
+    <a class="icon" href="#clips"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="1" width="8" height="14" fill="#13141A" stroke="#A7BBFF"/><polygon points="7,6 10,8 7,10" fill="#35E2E5"/></svg><span>Clips</span></a>
     <a class="icon" href="#torneo"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="2" width="8" height="6" fill="#F2C94C" stroke="#13141A"/><rect x="7" y="8" width="2" height="3" fill="#F2C94C"/><rect x="4" y="11" width="8" height="3" fill="#541DA2" stroke="#13141A"/><rect x="2" y="3" width="2" height="3" fill="none" stroke="#F2C94C"/><rect x="12" y="3" width="2" height="3" fill="none" stroke="#F2C94C"/></svg><span>Torneo CVT</span></a>
     <a class="icon" href="#widgets"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="2" width="11" height="8" fill="#DCE1F5" stroke="#13141A"/><rect x="1" y="2" width="11" height="2" fill="#2B68CF"/><rect x="4" y="6" width="11" height="8" fill="#DCE1F5" stroke="#13141A"/><rect x="4" y="6" width="11" height="2" fill="#35E2E5"/><rect x="6" y="10" width="6" height="1" fill="#541DA2"/></svg><span>Widgets</span></a>
   </nav>
@@ -232,6 +237,35 @@ p{margin:0}
       </div>
     </section>
 
+    <section class="win" id="clips" aria-labelledby="t-clips">
+      <div class="titlebar"><span class="t" id="t-clips">clips_vertical — Reproductor</span><span class="ctl" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span></div>
+      <div class="content">
+        <h2>Clips verticales de streams</h2>
+        <p class="lede">Momentos de transmisiones VTuber recortados y editados en formato vertical para Shorts y TikTok: subtítulos, reacciones del avatar, memes insertados y efectos de sonido para reforzar el remate. Edición completa en Premiere Pro.</p>
+        <div class="clips">
+          <div class="clip">
+            <div class="sunken player vert"><video controls preload="metadata" playsinline poster="media/clip-yun-poster.jpg" aria-label="Clip de Yun jugando un roguelike"><source src="media/clip-yun.mp4" type="video/mp4"></video></div>
+            <div class="body">
+              <h3>“La troleo” · Yun</h3>
+              <p class="kind">Clip vertical · 0:51 · 9:16</p>
+              <p>Momento de una partida de un roguelike pixelado: el juego en el centro, la reacción del avatar en primer plano y textos, memes y subtítulos que marcan el ritmo del chiste.</p>
+              <ul class="chips"><li>Premiere Pro</li><li>Recorte de stream</li><li>Subtítulos</li><li>Memes y SFX</li></ul>
+            </div>
+          </div>
+          <div class="clip">
+            <div class="sunken player vert"><video controls preload="metadata" playsinline poster="media/clip-vrchat-poster.jpg" aria-label="Clip de VRChat"><source src="media/clip-vrchat.mp4" type="video/mp4"></video></div>
+            <div class="body">
+              <h3>Conversación en VRChat</h3>
+              <p class="kind">Clip vertical · 0:43 · 9:16</p>
+              <p>Charla entre dos avatares en VRChat, con subtítulos en pantalla, reacciones de la otra persona en la esquina e imágenes y efectos de sonido insertados para cada broma.</p>
+              <ul class="chips"><li>Premiere Pro</li><li>Recorte de stream</li><li>Subtítulos</li><li>Memes y SFX</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="status" aria-hidden="true"><span>2 clips</span><span>720 × 1280</span></div>
+    </section>
+
     <section class="win" id="torneo" aria-labelledby="t-cvt">
       <div class="titlebar"><span class="t" id="t-cvt">torneo_cvt.txt — Propiedades</span><span class="ctl" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span></div>
       <div class="content">
@@ -280,6 +314,7 @@ p{margin:0}
     <a class="task" href="#sobre-mi">sobre_mi.txt</a>
     <a class="task" href="#miniaturas">Miniaturas</a>
     <a class="task" href="#trailer">trailer_cvt.mp4</a>
+    <a class="task" href="#clips">clips_vertical</a>
     <a class="task" href="#torneo">torneo_cvt.txt</a>
     <a class="task" href="#widgets">QNTMOS Widgets</a>
   </nav>
